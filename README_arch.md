@@ -127,7 +127,13 @@ cd ~
 git clone git@github.com:pixb/dotfiles.git
 ```
 
-### 2.3. Install_user
+### 2.3. Add proxy
+
+```bash
+exprot all_proxy=http://xxx.xxx.xxx.xxx
+```
+
+### 2.4. Install_user
 
 ```bash
 cd dotfiles
@@ -136,7 +142,7 @@ bash scripts/arch_install_user.sh
 
 ## Install scripts
 
-### install_init.sh
+### scripts/arch_install_init.sh
 
 pacstrap install to /mnt.
 
