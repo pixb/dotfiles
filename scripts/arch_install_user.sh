@@ -195,7 +195,7 @@ aur_install fastfetch
 pacman_install gdb gcc cmake meson htop btop duf usbutils rust
 
 if [ ! -d $HOME/.tmux ]; then
-  bash ${SCRIPT_DIR}/tmux/config_tmux.sh
+  bash ${SCRIPT_DIR}/../tmux/config_tmux.sh
 fi
 
 pacman_install bc
