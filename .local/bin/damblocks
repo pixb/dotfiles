@@ -1,0 +1,421 @@
+#!/usr/bin/sh
+# @author nate zhou
+# @since 2025,2026
+
+# damblocks - plain text status line generator written in POSIX shell
+#- individual update intervals and signals
+#- individual modules only updated when needed, instantly
+#- supporting to stdin, fifo and xsetroot
+#- supporting Wayland, Xorg and tty
+#- Restart damblocks with [reload](./bin/reload)
+
+# Fork of sbar(https://github.com/pystardust/sbar) with custom modules.
+
+# @depends  ttf-nerd-fonts-symbols wireplumber brightnessctl coreutils sed grep
+#           awk curl cronie udev
+# @suggests dash bluez-utils isync newsboat calcurse mpc wob xob stow
+
+# This script has completions: `.config/{z,ba}sh/completions/_scripts.{z,ba}sh`
+
+# Every function that supports signaling depends on one or more of:
+#   1. my personal scripts        (~/.local/bin/)
+#   2. cronjobs                   (~/.config/crontab.example)
+#   3. udev rules                 (/etc/udev/rules)
+# Specific dependencies are listed in the SIGNALING session in this script
+
+#To mange all the scripts, udev rules and cronjobs:
+# git clone https://codeberg.org/unixchad/damblocks
+# git clone https://github.com/gnuunixchad/damblocks
+# make install
+# make uninstall
+
+case "$1" in
+    --fifo)
+        mode="fifo"
+        ;;
+    --xsetroot)
+        mode="xsetroot"
+        ;;
+    *)
+        mode="stdin"
+        ;;
+esac
+
+DAMBLOCKS_FIFO="${XDG_RUNTIME_DIR}/damblocks.fifo"
+[ ! -p "$DAMBLOCKS_FIFO" ] && (rm -f "$DAMBLOCKS_FIFO"; mkfifo "$DAMBLOCKS_FIFO")
+
+#set -x
+# INI
+printf "$$" > "${XDG_RUNTIME_DIR}/damblocks.pid"
+sec=0
+
+# MODULES
+update_time () {
+    local icon=""
+    case "$(date +'%I')" in
+        01) icon="󱐿" ;;
+        02) icon="󱑀" ;;
+        03) icon="󱑁" ;;
+        04) icon="󱑂" ;;
+        05) icon="󱑃" ;;
+        06) icon="󱑄" ;;
+        07) icon="󱑅" ;;
+        08) icon="󱑆" ;;
+        09) icon="󱑇" ;;
+        10) icon="󱑈" ;;
+        11) icon="󱑉" ;;
+        12) icon="󱑊" ;;
+    esac
+	time="$icon $(date '+%b-%d %a %H:%M')"
+}
+
+update_bluetooth() {
+    local icon="󰂯"
+    if ! pgrep -x 'bluetoothd' >/dev/null; then
+        icon="󰂲"
+    else
+        local level="$(bluetoothctl info | grep -m1 'Battery Percentage' | awk -F'[()]' '{print $2}')"
+        [ -n "$level" ] && icon="󰂱" level=$level%
+    fi
+    bluetooth="${icon}${level}"
+}
+
+update_battery () {
+    local POWER="/sys/class/power_supply"
+
+    ls ${POWER}/BAT? >/dev/null 2>&1 || { icon=""; return; }
+
+    local icon=""
+    local status="$(cat $POWER/BAT?/status)"
+    local level="$(cat $POWER/BAT?/capacity)"
+    case "$status" in
+        "Discharging")
+            case "$level" in
+                [0-5]) icon="󰂎";;
+                [6-9]) icon="󰁺";;
+                1[0-9]) icon="󰁻";;
+                2[0-9]) icon="󰁼";;
+                3[0-9]) icon="󰁽";;
+                4[0-9]) icon="󰁽";;
+                5[0-9]) icon="󰁾";;
+                6[0-9]) icon="󰁿";;
+                7[0-9]) icon="󰂀";;
+                8[0-9]) icon="󰂁";;
+                9[0-9]) icon="󰂂";;
+                100)    icon="󰁹";;
+            esac
+            level="${level}%"
+            ;;
+        "Not charging"|"Full")
+            icon="" level="${level}%"
+            ;;
+        "Charging")
+            icon="" level="${level}%"
+            ;;
+    esac
+    ls ${POWER}/BAT? > /dev/null || icon=""
+    battery="${icon}${level}"
+}
+
+# For audio & brightness modules, save to XDG_CACHE_HOME for reboot consistency
+update_volume() {
+    local level=$(cat "${XDG_CACHE_HOME}/audio-@DEFAULT_AUDIO_SINK@.level" \
+                  2>/dev/null)
+    local muted=$(cat "${XDG_CACHE_HOME}/audio-@DEFAULT_AUDIO_SINK@.muted" \
+                  2>/dev/null)
+    [ -z "$muted" ] && icon="" || icon=""
+    [ -z "$level" ] || level="${level}%"
+    volume="${icon}${level}"
+}
+
+update_microphone() {
+    local level=$(cat "${XDG_CACHE_HOME}/audio-@DEFAULT_AUDIO_SOURCE@.level" \
+                  2>/dev/null)
+    local muted=$(cat "${XDG_CACHE_HOME}/audio-@DEFAULT_AUDIO_SOURCE@.muted" \
+                  2>/dev/null)
+    [ -z "$muted" ] && icon="" || icon=""
+    [ -z "$level" ] || level="${level}%"
+    microphone="${icon}${level}"
+}
+
+update_brightness() {
+    local icon=""
+    local level="$(cat ${XDG_CACHE_HOME}/brightness.level 2>/dev/null)"
+    case $level in
+        [0-9]) icon="󱩎" ;;
+        1[0-9]) icon="󱩏" ;;
+        2[0-9]) icon="󱩐" ;;
+        3[0-9]) icon="󱩐" ;;
+        4[0-9]) icon="󱩑" ;;
+        5[0-9]) icon="󱩒" ;;
+        6[0-9]) icon="󱩓" ;;
+        7[0-9]) icon="󱩔" ;;
+        8[0-9]) icon="󱩕" ;;
+        9[0-9]) icon="󱩖" ;;
+        100)    icon="󰛨"  ;;
+    esac
+    [ -z "$level" ] || level="${level}%"
+    brightness="${icon}${level}"
+}
+
+update_ethernet() {
+    local status="$(cat /sys/class/net/e*/operstate 2>/dev/null)"
+    local icon="󰛳"
+    [ "$status" != "up" ] && icon="󰲛"
+    ethernet="$icon"
+}
+
+update_wifi() {
+    local status="$(cat /sys/class/net/w*/operstate 2>/dev/null)"
+    local level="$(awk '/^\s*w/ {print int($3 * 100 / 70)"%"}' /proc/net/wireless)"
+    [ "$status" = "up" ] && icon="󰖩" || icon="󰖪" level=""
+    wifi="${icon}${level}"
+}
+
+update_fanmode() {
+    local icon="󰈐"
+    local speed="?"
+    local POLICY_ASUS=/sys/devices/platform/asus-nb-wmi/throttle_thermal_policy
+    local POLICY_IBM=/proc/acpi/ibm/fan
+    if [ -f "$POLICY_ASUS" ]; then
+        speed="$(cat /sys/module/asus_wmi/drivers/platform:asus-nb-wmi/asus-nb-wmi/hwmon/hwmon?/fan1_input)"
+        case "$(cat $POLICY_ASUS)" in
+            0) icon="󱜝" ;; # balanced
+            1) icon="󱑯" ;; # performance
+            2) icon="󱑰" ;; # silent
+        esac
+    elif [ -f "$POLICY_IBM" ]; then
+        case "$(grep 'level:' "$POLICY_IBM" | awk '{print $2}')" in
+            0|auto) icon="󱜝" ;;
+        esac
+        speed="$(grep 'speed:' "$POLICY_IBM" | awk '{print $2}')"
+    fi
+    fanmode="${icon}${speed}"
+}
+
+update_temperature() {
+    local icon=""
+    local THERMEL="/sys/class/thermal/thermal_zone0/temp"
+    local value="$(sed 's/000$//' "$THERMEL")"
+    [ -z "$value" ] && icon="󱔱" temperature=""
+    case "$value" in
+        [0-3][0-9]) icon="" ;;
+        4[0-9]) icon="" ;;
+        [5-6][0-9]) icon="" ;;
+        [7-9][0-9]) icon="" ;;
+    esac
+    [ -z "$value" ] || value="${value}℃"
+    temperature="${icon}${value}"
+}
+
+update_cpu() {
+    local usage="$(mpstat --dec=0 | awk 'NR==4 {print 100 - $NF}')"
+    local icon=""
+    [ -z "$usage" ] || usage="${usage}%"
+    cpu="${icon}${usage}"
+}
+
+update_memory() {
+    local usage="$(command free | awk '/Mem:/ {printf "%.0f\n", $3/$2 * 100}')"
+    local icon=""
+    [ -z "$usage" ] || usage="${usage}%"
+    memory="${icon}${usage}"
+}
+
+update_home() {
+    local usage="$(command df /home | awk 'NR==2 {print $5}' | tr -d '%')"
+    local icon=""
+    [ -z "$usage" ] || usage="${usage}%"
+    home="${icon}${usage}"
+}
+
+update_root() {
+    local usage="$(command df / | awk 'NR==2 {print $5}' | tr -d '%')"
+    local icon=""
+    [ -z "$usage" ] || usage="${usage}%"
+    root="${icon}${usage}"
+}
+
+#update_usb() {
+#    result="$(lsblk -o 'tran' | grep usb | wc -l)"
+#    icon=""
+#    usb="$icon$result"
+#}
+
+update_uptime() {
+    local result="$(uptime -p | sed 's/up //; s/ week\(s\)\?/w/; s/ day\(s\)\?/d/; s/ hour\(s\)\?/h/; s/[0-9]* minute.*//; s/ $//; s/ / /;' | cut -d',' -f-2 | sed 's/[^0-9a-z]//g')"
+    local icon=""
+    [ -n "$result" ] && uptime="${icon}${result}" || uptime="$icon ≤1h"
+}
+
+update_ttylogin() {
+    local count="$(w -h | wc -l )"
+    local icon=""
+    [ "$count" -gt 1 ] && icon=""
+    ttylogin="${icon}${count}"
+}
+
+# cache file generated by `${HOME}/.local/bin/checkupdates-cron`
+update_pacman() {
+    local result="$(cat $HOME/.cache/checkupdates-cron.num)"
+    local KERNELS="linux linux-lts linux-zen"
+    local kernel_running=$(uname -r | sed 's/-lts//; s/-arch/\.arch/; s/-zen//')
+    local kernel_installed=$(pacman -Q --color never $KERNELS 2> /dev/null | awk '{print $2}') # no quotes on $KERNELS
+    if [ -z "$(echo "$kernel_installed" | grep "$kernel_running")" ]; then
+        local icon=""
+    else
+        local icon="󰳛"
+    fi
+    pacman="${icon}${result}"
+}
+
+update_mutt() {
+    local MBSYNC_CACHE="${XDG_RUNTIME_DIR}/mbsync-cron"
+
+    [ -f "$MBSYNC_CACHE" ] || { mutt="󱏣"; return; }
+
+    local MAIL_DIR="$HOME/doc/mail"
+    local UPDATE_FREQUENCY=3600 # in seconds
+    local update_time="$(stat -L -c "%Y" "$MBSYNC_CACHE")"
+    local current_time="$(date +%s)"
+    local count=0
+    local icon="󰇮"
+    # Loop through each mailbox directory
+    for mailbox in "$MAIL_DIR"/*; do
+        if [ -d "$mailbox" ]; then
+            # Manually specify folders instead of using brace expansion
+            for folder in "$mailbox/INBOX" "$mailbox/Junk"; do
+                if [ -d "$folder/new" ]; then
+                    # Count the number of files in the 'new' directory
+                    count=$(($count + $(find "$folder/new" -type f | wc -l)))
+                fi
+            done
+        fi
+    done
+    [ $((current_time - update_time)) -gt "$UPDATE_FREQUENCY" ] && icon="󱏣"
+    [ "$count" -gt 0 ] && icon="󰛏"
+    mutt="${icon}${count}"
+}
+
+# cache file generated by `${HOME}/.local/bin/newsboat-num-cron`
+# RSS feeds updated by `${HOME}/.local/bin/newsboat-update-cron`
+update_newsboat() {
+    local NEWS_CACHE="$HOME/.cache/newsboat.num"
+    local update_time=$(stat -L -c "%Y" "$NEWS_CACHE")
+    local current_time=$(date +%s)
+    local UPDATE_FREQUENCY=16200 # 4.5H
+    local count="$(cat $NEWS_CACHE)"
+    local icon="󰍡"
+    [ "$count" -gt 0 ] && icon="󱥁"
+    [ $((current_time - update_time)) -gt "$UPDATE_FREQUENCY" ] && icon="󱙍"
+    newsboat="${icon}${count}"
+}
+
+# cache file generaded by `${HOME}/.local/bin/calcurse-num-cron`
+update_calcurse() {
+    command -v calcurse >/dev/null 2>&1 || { icon="󰃴"; return; }
+    local DAY="14"
+    local count="$(calcurse -d "$DAY" | grep '^[0-9]' | wc -l)"
+    local icon=""
+    calcurse="${icon}${count}"
+}
+
+update_mpd() {
+    command mpc >/dev/null 2>&1 || { icon="󰝛"; return; }
+    local icon="󰝚"
+    if [ $(mpc status '%state%') != "playing" ]; then
+        icon="󰝛"
+    fi
+    local title="$(mpc current -f "[%title%]" \
+                | cut -c1-12 \
+                | sed 's/[[:space:],.{[-]*$//; s/[&]//g')"
+    mpd="${icon}${title}"
+}
+
+# cache file generated/updated by `${HOME}/.local/bin/wttr --cron`
+update_wttr() {
+    local WTTR_CACHE="$HOME/.cache/wttr"
+    local update_time="$(stat -L -c "%Y" "$WTTR_CACHE")"
+    local current_time="$(date +%s)"
+    local UPDATE_FREQUENCY=5400 # 1.5H
+    local icon=""
+    local result=""
+    [ $((current_time - update_time)) -gt "$UPDATE_FREQUENCY" ] && result=""
+    result="$(sed 's/ //g; s/\+//' $WTTR_CACHE)"
+    [ ! -f "$WTTR_CACHE" ] || [ -z "$result" ] && icon="󰨹"
+    wttr="${icon}${result}"
+}
+
+# modules that don't update on their own need to be run at the start for getting their initial value
+update_volume; update_microphone; update_brightness; update_pacman; update_newsboat; update_calcurse; update_mpd; update_wttr
+
+display () {
+    local space=" "
+    local delimiter_home="["
+    local delimiter_end="]"
+    local separator="]["
+    local line="${delimiter_home}${mpd}${separator}${wttr}${separator}${calcurse}${space}${newsboat}${space}${mutt}${separator}${pacman}${space}${ttylogin}${space}${uptime}${separator}${root}${space}${home}${separator}${memory}${space}${cpu}${space}${temperature}${space}${fanmode}${separator}${wifi}${space}${ethernet}${separator}${brightness}${space}${microphone}${space}${volume}${separator}${battery}${space}${bluetooth}${separator}${time}${delimiter_end}"
+
+case "$mode" in
+    fifo)
+        printf "%s" "$line" > "$DAMBLOCKS_FIFO"
+        ;;
+    xsetroot)
+        xsetroot -name "$line" >/dev/null 2>&1
+        ;;
+    stdin)
+        printf "%s" "$line"
+        ;;
+esac
+}
+
+# SIGNALING
+# trap	"<function>;display"		"RTMIN+n"
+# to update it from external commands
+# kill -m "$(cat ${XDG_RUNTIME_DIR}/damblocks.pid)"
+# where m = 34 + n
+trap	"update_bluetooth;display"	"RTMIN"     # -34
+trap	"update_battery;display"  	"RTMIN+1"
+# bluetooth audio device volume: /etc/udev/rules.d/99-damblocks-bluetooth.rules
+# usb sound device volume:       /etc/udev/rules.d/99-damblocks-usb-audio.rules
+trap	"update_volume;display"	  	"RTMIN+2"   # -36 .local/bin/audio
+trap	"update_microphone;display"	"RTMIN+3"   # -37 .local/bin/audio
+trap	"update_brightness;display"	"RTMIN+4"   # -38 .local/bin/bright
+#trap	"update_usb;display"	    "RTMIN+5"   # -39 udev.rules
+trap	"update_pacman;display"	    "RTMIN+6"   # -40 .local/bin/checkupdates-cron
+trap	"update_mutt;display"	    "RTMIN+7"   # -41 .local/bin/mbs{,-cron}
+trap	"update_newsboat;display"   "RTMIN+8"   # -42 .local/bin/news*
+trap	"update_calcurse;display"   "RTMIN+9"   # -43 .local/bin/calcurse*
+trap	"update_wttr;display"       "RTMIN+10"  # -44 .local/bin/wttr --cron
+trap    "update_mpd;display"        "RTMIN+11"  # -45 .local/bin/damblocks-mpdd
+trap    "update_battery;display"    "RTMIN+12"  # -46 99-damblocks-battery.rules
+
+while true
+do
+	sleep 1 & wait && {
+		# to update item ever n seconds with a offset of m
+		## [ $((sec % n)) -eq m ] && udpate_item
+		[ $((sec % 5 )) -eq 0 ] && update_time 	# update time every 5 seconds
+		[ $((sec % 10)) -eq 0 ] && update_battery
+		[ $((sec % 10)) -eq 0 ] && update_bluetooth
+		[ $((sec % 10)) -eq 0 ] && update_ethernet
+		[ $((sec % 10)) -eq 0 ] && update_wifi
+		[ $((sec % 5)) -eq 0 ] && update_temperature
+		[ $((sec % 5)) -eq 0 ] && update_fanmode
+		[ $((sec % 5)) -eq 0 ] && update_cpu
+		[ $((sec % 5)) -eq 0 ] && update_memory
+		[ $((sec % 60)) -eq 0 ] && update_home
+		[ $((sec % 60)) -eq 0 ] && update_root
+		#[ $((sec % 60)) -eq 0 ] && update_usb
+		[ $((sec % 900)) -eq 0 ] && update_uptime
+		[ $((sec % 60)) -eq 0 ] && update_ttylogin
+		[ $((sec % 60)) -eq 0 ] && update_mutt
+
+		# how often the display updates ( 5 seconds )
+		[ $((sec % 5 )) -eq 0 ] && display
+
+        # cronjob
+		#[ $((sec % 1800 )) -eq 0 ] && "$HOME/.local/bin/mbs" # mbsync
+		sec=$((sec + 1))
+	}
+done

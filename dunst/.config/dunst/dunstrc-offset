@@ -1,0 +1,74 @@
+# vim:ft=conf
+# @author nate zhou
+# @since 2023,2024,2025,2026
+# dunst/dunstrc-kwm
+# add offset for kwm on river
+
+[global]
+    monitor = 0
+    follow = keyboard
+    width = 294
+    height = (0, 600)
+    origin = top-right
+    offset = (12 ,36)
+    scale = 0
+    notification_limit = 30
+    indicate_hidden = yes
+    transparency = 0
+    separator_height = 2
+    padding = 4
+    horizontal_padding = 6
+    frame_width = 2
+    gap_size = 2
+    separator_color = frame
+    sort = update
+    font = SourceCodePro 14
+    line_height = 0
+    markup = full
+    format = "<b>%s</b>\n%b"
+    alignment = center
+    vertical_alignment = top
+    show_age_threshold = -1
+    ellipsize = middle
+    ignore_newline = no
+    stack_duplicates = true
+    hide_duplicate_count = false
+    show_indicators = yes
+    sticky_history = yes
+    history_length = 30
+    dmenu = /usr/bin/wmenu -p dunst:
+    browser = /usr/bin/qutebrowser
+    always_run_script = true
+    title = Dunst
+    class = Dunst
+    corner_radius = 0
+    corners = all
+    ignore_dbusclose = false
+    force_xwayland = false
+    force_xinerama = false
+    mouse_left_click = close_current
+    mouse_middle_click = do_action, close_current
+    mouse_right_click = context_all
+
+[experimental]
+    per_monitor_dpi = false
+
+[urgency_low]
+    background = "#111111"
+    foreground = "#dddddd"
+    frame_color= "#8ec07c"
+    timeout = 7
+
+[urgency_normal]
+    background = "#111111"
+    foreground = "#dddddd"
+    frame_color = "#8ec07c"
+    timeout = 12
+    override_pause_level = 15
+
+[urgency_critical]
+    background = "#111111"
+    foreground = "#ffffff"
+    frame_color = "#b16286"
+    timeout = 0
+    override_pause_level = 60
