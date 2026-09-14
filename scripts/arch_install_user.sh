@@ -258,8 +258,8 @@ if [ ! -e /etc/docker/daemon.json ]; then
 EOF
 fi
 
-systemctl_enable docker.serivce
-systemctl_start docker.service
+systemctl_enable docker
+systemctl_start docker
 
 pacman_install pipewire
 pacman_install pipewire-pulse
@@ -270,7 +270,7 @@ systemctl --user enable --now pipewire pipewire-pulse wireplumber
 pacman_install bluez
 pacman_install bluez-utils
 pacman_install bluetui
-systemctl_enable bluetooth.service
-systemctl_start bluetooth.service
+systemctl_enable bluetooth
+systemctl_start bluetooth
 pacman_install nethogs
 pacman_install fd

@@ -49,8 +49,6 @@ source $HOME/dotfiles/config/git.zsh
 source $HOME/dotfiles/config/fzf.zsh
 source $HOME/dotfiles/config/android.zsh
 source $HOME/.profile
-export PATH=$HOME/dev/linux-demo/pix-shell:$PATH
-export PATH=$HOME/dev/linux-demo/bin:$PATH
 
 ############
 #  golang  #
@@ -80,11 +78,6 @@ if [ ! -d "${HOME}"/.pyenv ]; then
   echo -e "${COLOR_YELLOW}pyenv is not install${COLOR_NC}"
   git clone https://github.com/pyenv/pyenv.git "${HOME}"/.pyenv
 fi
-if ! command -v python3 >/dev/null 2>&1; then
-  echo -e "${COLOR_YELLOW} python3 is not install${COLOR_NC}"
-  pyenv install 3.13.0
-  pyenv global 3.13.0
-fi
 export PATH=$HOME/.pyenv/bin:$PATH
 eval "$(pyenv init --path)"
 eval "$(pyenv init -)"
@@ -97,10 +90,6 @@ if [ ! -e $HOME/.sdkman ]; then
 	curl -s "https://get.sdkman.io" | bash
 fi
 source "$HOME/.sdkman/bin/sdkman-init.sh"
-
-export JAVA_HOME="/usr/local/jdk-17.0.9/"
-export CLASSPATH=.:${JAVA_HOME}/lib:${JAVA_HOME}/jre/lib
-export PATH="$PATH:${JAVA_HOME}/lib/tools.jar"
 
 ###########
 #  rust   #
