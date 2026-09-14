@@ -172,7 +172,7 @@ else
   rm -rf "${SCRIPT_RES_DIR}/trizen"
   git clone https://aur.archlinux.org/trizen.git "${SCRIPT_RES_DIR}/trizen"
   cd "${SCRIPT_RES_DIR}/trizen" || exit
-  yes | makepkg -si
+  makepkg -si --noconfirm
   cd ${SCRIPT_DIR}
 fi
 
@@ -273,3 +273,4 @@ pacman_install bluetui
 systemctl_enable bluetooth.service
 systemctl_start bluetooth.service
 pacman_install nethogs
+pacman_install fd
