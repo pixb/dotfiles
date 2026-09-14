@@ -18,7 +18,7 @@ ZINIT_FILE=$HOME/.local/share/zinit/zinit.git/zinit.zsh
 if [ -e ${ZINIT_FILE} ]; then
     source ${ZINIT_FILE}
 else
-    bash -c "$(curl --fail --show-error --silent --location https://raw.githubusercontent.com/zdharma-continuum/zinit/HEAD/scripts/install.sh)"
+    NO_EDIT=1 NO_ANNEXES=1 bash -c "$(curl --fail --show-error --silent --location https://raw.githubusercontent.com/zdharma-continuum/zinit/HEAD/scripts/install.sh)"
 fi
 
 
@@ -155,8 +155,6 @@ zinit snippet OMZ::plugins/sudo/sudo.plugin.zsh
 # Install plugins if there are plugins that have not been installed
 # zinit self-update
 # zinit update --all
-
-### End of Zinit's installer chunk
 
 [[ -s "/home/pix/.gvm/scripts/gvm" ]] && source "/home/pix/.gvm/scripts/gvm"
 
