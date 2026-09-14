@@ -128,7 +128,9 @@ else
   if command -v sdk &>/dev/null; then
     echo -e "${COLOR_GREEN}sdkman is installed${COLOR_GREEN}"
     set +u
-    sdk install java 11.0.23-tem
+    if [ ! -e ${HOME}/.sdkman/candidates/java/11.0.23-tem ]; then
+      sdk install java 11.0.23-tem
+    fi
     set -u
   else
     echo -e "${COLOR_YELLOW}sdknam is not install${COLOR_NC}"
@@ -147,6 +149,7 @@ fi
 if command -v trizen &>/dev/null; then
   echo -e "${COLOR_GREEN}trizen is installed.${COLOR_NC}"
 else
+  rm -rf "${SCRIPT_RES_DIR}/trizen"
   git clone https://aur.archlinux.org/trizen.git "${SCRIPT_RES_DIR}/trizen"
   cd "${SCRIPT_RES_DIR}/trizen" || exit
   yes | makepkg -si
