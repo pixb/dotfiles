@@ -138,12 +138,31 @@ fi
 # sed -i 's/# *\(%wheel.*NOPASSWD: ALL\)/\1/' /etc/sudoers
 sed -i '/%wheel ALL=(ALL:ALL) ALL/s/^# //p' /etc/sudoers
 
-pacman_install archlinux-keyring grub efibootmgr os-prober openssh
+# 自动检测引导模式
+if [ -d /sys/firmware/efi ]; then
+  BOOT_MODE="uefi"
+else
+  BOOT_MODE="bios"
+fi
+
+# 自动检测安装磁盘
+TARGET_DISK=$(lsblk -dpno NAME | head -1)
+
+if [ "$BOOT_MODE" = "uefi" ]; then
+  pacman_install archlinux-keyring grub efibootmgr os-prober openssh
+else
+  pacman_install archlinux-keyring grub os-prober openssh
+fi
 
 if [ ! -d /boot/grub ]; then
   mkdir -p /boot/grub
 fi
-grub-install --target="$(uname -m)"-efi --efi-directory=/boot --bootloader-id=Arch
+
+if [ "$BOOT_MODE" = "uefi" ]; then
+  grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=Arch
+else
+  grub-install --target=i386-pc "$TARGET_DISK"
+fi
 grub-mkconfig -o /boot/grub/grub.cfg
 
 systemctl enable sshd.service
