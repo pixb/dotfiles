@@ -88,6 +88,26 @@ aur_install() {
   done
 }
 
+systemctl_enable() {
+  # 未启用才 enable
+  if [ "$(systemctl is-enabled $1 2>/dev/null || true)" != "enabled" ]; then
+    echo -e "${COLOR_GREEN}enabling $1.${COLOR_NC}"
+    sudo systemctl enable $1
+  else
+    echo -e "${COLOR_GREEN}$1 already enabled${COLOR_NC}"
+  fi
+}
+
+systemctl_start() {
+  # 未运行才 start
+  if [ "$(systemctl is-active $1 2>/dev/null || true)" != "active" ]; then
+    echo -e "${COLOR_GREEN}starting $1${COLOR_NC}"
+    sudo systemctl start $1
+  else
+    echo -e "${COLOR_GREEN}$1 already running${COLOR_NC}"
+  fi
+}
+
 ### Install nodejs
 
 pacman_install nodejs npm
@@ -165,20 +185,9 @@ if command -v ssh >/dev/null 2>&1; then
   echo -e "${COLOR_GREEN}openssh is installed${COLOR_NC}"
 
   # 未启用才 enable
-  if [ "$(systemctl is-enabled sshd.service 2>/dev/null || true)" != "enabled" ]; then
-    echo -e "${COLOR_GREEN}enabling sshd.service${COLOR_NC}"
-    sudo systemctl enable sshd.service
-  else
-    echo -e "${COLOR_GREEN}sshd.service already enabled${COLOR_NC}"
-  fi
-
+  systemctl_enable sshd.service
   # 未运行才 start
-  if [ "$(systemctl is-active sshd.service 2>/dev/null || true)" != "active" ]; then
-    echo -e "${COLOR_GREEN}starting sshd.service${COLOR_NC}"
-    sudo systemctl start sshd.service
-  else
-    echo -e "${COLOR_GREEN}sshd.service already running${COLOR_NC}"
-  fi
+  systemctl_start sshd.service
 fi
 
 # pyenv
@@ -249,8 +258,8 @@ if [ ! -e /etc/docker/daemon.json ]; then
 EOF
 fi
 
-sudo systemctl enable docker
-sudo systemctl start docker
+systemctl_enable docker.serivce
+systemctl_start docker.service
 
 pacman_install pipewire
 pacman_install pipewire-pulse
@@ -261,5 +270,6 @@ systemctl --user enable --now pipewire pipewire-pulse wireplumber
 pacman_install bluez
 pacman_install bluez-utils
 pacman_install bluetui
-sudo systemctl enable --now bluetooth.service
+systemctl_enable bluetooth.service
+systemctl_start bluetooth.service
 pacman_install nethogs
