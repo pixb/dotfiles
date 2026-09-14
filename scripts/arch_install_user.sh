@@ -234,7 +234,7 @@ if [ ! -d /etc/docker ]; then
   sudo mkdir -p /etc/docker
 fi
 
-if ! -e /etc/docker/daemon.json; then
+if [ ! -e /etc/docker/daemon.json ]; then
   sudo tee -a /etc/docker/daemon.json <<EOF
 {
     "registry-mirrors": [
