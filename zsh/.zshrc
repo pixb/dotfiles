@@ -70,6 +70,12 @@ export GOPROXY=https://goproxy.cn,direct
 # export PATH=$PATH:$GOPATH/bin
 
 
+#########
+#  npm  #
+#########
+if [ -e "${HOME}/.npm-global" ]; then
+  export PATH="$HOME/.npm-global/bin:$PATH"
+fi
 
 ###########
 #  pyenv  #

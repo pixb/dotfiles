@@ -76,6 +76,23 @@ step3_install_kwm() {
     [ ! -d "$src_dir" ] && git clone https://codeberg.org/unixchad/kwm "$src_dir"
     cd "$src_dir"
     git checkout master
+
+    # 克隆 GitHub 依赖到本地，避免网络问题
+    if [ ! -d "mvzr" ]; then
+      log_info "克隆 mvzr..."
+      git clone https://github.com/mnemnion/mvzr mvzr
+    fi
+    if [ ! -d "fcft" ]; then
+      log_info "克隆 zig-fcft..."
+      git clone https://github.com/kewuaa/zig-fcft fcft
+    fi
+
+    # 修改 build.zig.zon，将 GitHub URL 改为本地 path
+    sed -i 's|\.url = "https://github.com/mnemnion/mvzr/archive/refs/tags/v0.3.10.tar.gz",|\.path = "mvzr",|' build.zig.zon
+    sed -i 's|\.hash = "mvzr-0.3.9-ZSOky8FzAQBQ9-GkQnaLjOZZHxrioD8NwY-QyZT6oAyR",||' build.zig.zon
+    sed -i 's|\.url = "https://github.com/kewuaa/zig-fcft/archive/refs/tags/v2.0.0.tar.gz",|\.path = "fcft",|' build.zig.zon
+    sed -i 's|\.hash = "fcft-2.0.0-zcx6C5EaAADIEaQzDg5D4UvFFMjSEwDE38vdE9xObeN9",||' build.zig.zon
+
     rm -rf .zig-cache zig-cache zig-out
     sudo env "PATH=/usr/local/bin:/usr/bin:$PATH" SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt zig build -Doptimize=ReleaseSafe --prefix /usr/local install
     log_ok "kwm 安装完成"
