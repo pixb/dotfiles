@@ -44,10 +44,10 @@ source ~/.pl10krc
 export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=yellow'
 
 # Load my custom configurations
-source $HOME/dev/linux-demo/config/alias.zsh
-source $HOME/dev/linux-demo/config/git.zsh
-source $HOME/dev/linux-demo/config/fzf.zsh
-source $HOME/dev/linux-demo/config/android.zsh
+source $HOME/dotfiles/config/alias.zsh
+source $HOME/dotfiles/config/git.zsh
+source $HOME/dotfiles/config/fzf.zsh
+source $HOME/dotfiles/config/android.zsh
 source $HOME/.profile
 export PATH=$HOME/dev/linux-demo/pix-shell:$PATH
 export PATH=$HOME/dev/linux-demo/bin:$PATH

@@ -159,11 +159,26 @@ fi
 pacman_install neovim openssh tk fzf the_silver_searcher
 pacman_install tmux go ripgrep lazygit imagemagick highlight
 pacman_install p7zip rsync cifs-utils smbclient stow
-# ssh serivce start
+
+# ssh service start
 if command -v ssh >/dev/null 2>&1; then
   echo -e "${COLOR_GREEN}openssh is installed${COLOR_NC}"
-  sudo systemctl enable sshd.service
-  sudo systemctl start sshd.service
+
+  # 未启用才 enable
+  if [ "$(systemctl is-enabled sshd.service 2>/dev/null || true)" != "enabled" ]; then
+    echo -e "${COLOR_GREEN}enabling sshd.service${COLOR_NC}"
+    sudo systemctl enable sshd.service
+  else
+    echo -e "${COLOR_GREEN}sshd.service already enabled${COLOR_NC}"
+  fi
+
+  # 未运行才 start
+  if [ "$(systemctl is-active sshd.service 2>/dev/null || true)" != "active" ]; then
+    echo -e "${COLOR_GREEN}starting sshd.service${COLOR_NC}"
+    sudo systemctl start sshd.service
+  else
+    echo -e "${COLOR_GREEN}sshd.service already running${COLOR_NC}"
+  fi
 fi
 
 # pyenv
