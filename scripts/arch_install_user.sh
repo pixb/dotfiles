@@ -129,6 +129,7 @@ stow -t ~ vim
 stow -t ~ zsh
 stow -t ~ git
 stow -t ~ shell
+stow -t ~ go
 cd ${SCRIPT_DIR}
 
 if [ -e $HOME/.sdkman/bin/sdkman-init.sh ]; then
@@ -175,6 +176,10 @@ else
   makepkg -si --noconfirm
   cd ${SCRIPT_DIR}
 fi
+
+cd "${HOME}/dotfiles" || exit
+stow -t ~ trizen
+cd "${SCRIPT_DIR}" || exit
 
 pacman_install neovim openssh tk fzf the_silver_searcher
 pacman_install tmux go ripgrep lazygit imagemagick highlight
