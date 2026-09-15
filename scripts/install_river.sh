@@ -116,6 +116,7 @@ step4_stow_config() {
     cd "${HOME}/dotfiles" || exit
     stow -t ~ kwm
     stow -t ~ river
+    stow -t ~ .local
   fi
 }
 

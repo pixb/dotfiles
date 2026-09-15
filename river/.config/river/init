@@ -6,6 +6,3 @@
 # https://codeberg.org/unixchad/kwm
 # https://github.com/gnuunixchad/kwm
 /usr/local/bin/kwm &
-
-# 状态栏
-${HOME}/.local/bin/damblocks --fifo &
