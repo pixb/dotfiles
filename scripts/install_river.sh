@@ -48,6 +48,18 @@ step1_deps() {
 
   sudo pacman -S --needed wlroots0.20 scdoc tllist wayland-protocols sysstat gammastep --noconfirm
   sudo pacman -S --needed kanshi swayidle stow --noconfirm
+
+  # fcft 是 AUR 包，需要 yay 或 paru
+  if ! pacman -Qi fcft >/dev/null 2>&1; then
+    if command -v yay &>/dev/null; then
+      yay -S --needed fcft --noconfirm
+    elif command -v paru &>/dev/null; then
+      paru -S --needed fcft --noconfirm
+    else
+      log_err "未找到 AUR helper (yay/paru)，请手动安装 fcft"
+      exit 1
+    fi
+  fi
   log_ok "依赖安装完成"
 }
 
@@ -93,7 +105,7 @@ step3_install_kwm() {
     sed -i 's|\.url = "https://github.com/kewuaa/zig-fcft/archive/refs/tags/v2.0.0.tar.gz",|\.path = "fcft",|' build.zig.zon
     sed -i 's|\.hash = "fcft-2.0.0-zcx6C5EaAADIEaQzDg5D4UvFFMjSEwDE38vdE9xObeN9",||' build.zig.zon
 
-    rm -rf .zig-cache zig-cache zig-out
+    sudo rm -rf .zig-cache zig-cache zig-out
     sudo env "PATH=/usr/local/bin:/usr/bin:$PATH" SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt zig build -Doptimize=ReleaseSafe --prefix /usr/local install
     log_ok "kwm 安装完成"
   fi
