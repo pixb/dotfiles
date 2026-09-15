@@ -146,7 +146,20 @@ else
 fi
 
 # 自动检测安装磁盘
-TARGET_DISK=$(lsblk -dpno NAME | head -1)
+echo -e "${COLOR_GREEN}可用磁盘列表：${COLOR_NC}"
+lsblk -dpno NAME,SIZE,MODEL
+echo ""
+read -r -p "请输入目标磁盘（如 /dev/sda）: " TARGET_DISK
+
+if [ -z "$TARGET_DISK" ]; then
+  echo -e "${COLOR_RED}错误：未指定目标磁盘${COLOR_NC}" >&2
+  exit 1
+fi
+
+if [ ! -b "$TARGET_DISK" ]; then
+  echo -e "${COLOR_RED}错误：$TARGET_DISK 不存在或不是块设备${COLOR_NC}" >&2
+  exit 1
+fi
 
 if [ "$BOOT_MODE" = "uefi" ]; then
   pacman_install archlinux-keyring grub efibootmgr os-prober openssh
@@ -159,10 +172,31 @@ if [ ! -d /boot/grub ]; then
 fi
 
 if [ "$BOOT_MODE" = "uefi" ]; then
-  grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=Arch
+  # 验证 /boot 是否为 FAT32 文件系统（EFI 分区要求）
+  BOOT_FS=$(findmnt -n -o FSTYPE /boot 2>/dev/null || true)
+  if [ "$BOOT_FS" != "vfat" ]; then
+    echo -e "${COLOR_YELLOW}警告：/boot 分区不是 FAT32 格式（当前：$BOOT_FS），EFI 引导可能失败${COLOR_NC}"
+    read -r -p "是否继续安装？(y/N): " CONFIRM
+    if [ "$CONFIRM" != "y" ] && [ "$CONFIRM" != "Y" ]; then
+      echo -e "${COLOR_RED}安装已取消${COLOR_NC}"
+      exit 1
+    fi
+  fi
+  
+  if ! grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=Arch; then
+    echo -e "${COLOR_RED}错误：grub-install (UEFI) 安装失败${COLOR_NC}" >&2
+    exit 1
+  fi
 else
-  grub-install --target=i386-pc "$TARGET_DISK"
+  if ! grub-install --target=i386-pc "$TARGET_DISK"; then
+    echo -e "${COLOR_RED}错误：grub-install (BIOS) 安装失败${COLOR_NC}" >&2
+    exit 1
+  fi
 fi
-grub-mkconfig -o /boot/grub/grub.cfg
+
+if ! grub-mkconfig -o /boot/grub/grub.cfg; then
+  echo -e "${COLOR_RED}错误：grub-mkconfig 生成配置失败${COLOR_NC}" >&2
+  exit 1
+fi
 
 systemctl enable sshd.service
