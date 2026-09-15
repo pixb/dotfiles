@@ -52,10 +52,10 @@ install_font() {
 
 install_font "Monaspace" \
   "/usr/share/fonts/OTF/MonaspiceArNerdFont-Bold.otf" \
-  "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/Monaspace.zip"
+  "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.5.1/Monaspace.zip"
 
 install_font "NotoSansM" \
   "/usr/share/fonts/TTF/NotoSansMNerdFontMono-Regular.ttf" \
-  "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.4.0/Noto.zip"
+  "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.5.1/Noto.zip"
 
 fc-cache -fv
