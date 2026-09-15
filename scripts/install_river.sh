@@ -49,14 +49,12 @@ step1_deps() {
   sudo pacman -S --needed wlroots0.20 scdoc tllist wayland-protocols sysstat gammastep --noconfirm
   sudo pacman -S --needed kanshi swayidle stow --noconfirm
 
-  # fcft 是 AUR 包，需要 yay 或 paru
+  # fcft 是 AUR 包，使用 trizen 安装
   if ! pacman -Qi fcft >/dev/null 2>&1; then
-    if command -v yay &>/dev/null; then
-      yay -S --needed fcft --noconfirm
-    elif command -v paru &>/dev/null; then
-      paru -S --needed fcft --noconfirm
+    if command -v trizen &>/dev/null; then
+      trizen -S --needed fcft --noconfirm
     else
-      log_err "未找到 AUR helper (yay/paru)，请手动安装 fcft"
+      log_err "未找到 trizen，请先安装 trizen"
       exit 1
     fi
   fi
