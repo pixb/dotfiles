@@ -10,7 +10,7 @@
     .working_directory = .home,
 
     .startup_cmds = .{
-        // .{ "swaybg", "-i", "/path/to/wallpaper" },
+        // 夜灯
         .{ "gammastep", "-O", "5000" },
         .{"kanshi"},
         .{ "fcitx5", "-d", "--verbose", "'*=0'" },
@@ -18,6 +18,7 @@
         .{ "wl-paste", "--watch", "cliphist", "store" },
         .{ "dunst", "-conf", "${HOME}/.config/dunst/dunstrc-offset" },
         .{ "sh", "-c", "swaybg -i ${HOME}/.local/share/wallpaper -m fill" },
+        // start foot server
         .{ "sh", "-c", "${HOME}/.local/bin/foots" },
         // .{ "sh", "-c", "${HOME}/.local/bin/lucia -d" },
         // .{ "sh", "-c", "${HOME}/.local/bin/wobd -c ${HOME}/.config/wob/wob-offset.ini" },
