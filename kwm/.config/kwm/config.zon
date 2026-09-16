@@ -12,11 +12,17 @@
     .startup_cmds = .{
         // 夜灯
         .{ "gammastep", "-O", "5000" },
+        // 自动显示器
         .{"kanshi"},
+        // 输入法
         .{ "fcitx5", "-d", "--verbose", "'*=0'" },
+        // 空闲自动锁定
         .{"swayidle"},
+        // 剪贴板自动监听
         .{ "wl-paste", "--watch", "cliphist", "store" },
+        // 通知
         .{ "dunst", "-conf", "${HOME}/.config/dunst/dunstrc-offset" },
+        // 壁纸
         .{ "sh", "-c", "swaybg -i ${HOME}/.local/share/wallpaper -m fill" },
         // start foot server
         .{ "sh", "-c", "${HOME}/.local/bin/foots" },
