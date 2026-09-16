@@ -35,7 +35,7 @@ export BROWSER=/usr/bin/google-chrome-stable
 export EDITOR=/usr/bin/nvim
 export SYSTEMD_EDITOR=vim
 
-export GTK_IM_MODULE=fcitx
+# export GTK_IM_MODULE=fcitx
 export QT_IM_MODULE=fcitx
 export XMODIFIERS=@im=fcitx
 
