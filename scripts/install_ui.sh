@@ -67,6 +67,15 @@ pacman_install wl-clipboard
 pacman_install dunst
 pacman_install libnotify
 
+pacman_install qutebrowser
+pacman_install lf
+pacman_install wtype
+pacman_install mpc
+trizen_install abduco
+trizen_install dvtm
+trizen_install waylock
+trizen_install wlrctl
+
 cd "${DOTFILES_PATH}" || exit
 stow -t ~ foot
 stow -t ~ waybar
