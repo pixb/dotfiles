@@ -290,10 +290,18 @@ mkdir -p ~/work
 # create samba user
 sudo groupadd sambashare 2>/dev/null || true
 sudo usermod -aG sambashare "$(whoami)"
-echo "设置 samba 密码（将用于 Windows/macOS 访问共享）:"
-sudo smbpasswd -a "$(whoami)"
+
+# 检查用户是否已在 samba 密码数据库中，不存在时才设置
+if ! sudo pdbedit -L 2>/dev/null | grep -q "^$(whoami):"; then
+  echo "设置 samba 密码（将用于 Windows/macOS 访问共享）:"
+  sudo smbpasswd -a "$(whoami)"
+else
+  echo -e "${COLOR_GREEN}$(whoami) 已存在于 samba 密码数据库，跳过设置${COLOR_NC}"
+fi
 
 systemctl_enable smb
 systemctl_start smb
 systemctl_enable nmb
 systemctl_start nmb
+
+aur_install v2raya-bin
