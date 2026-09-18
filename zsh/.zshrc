@@ -30,7 +30,10 @@ HISTFILE=~/.zsh_history
 ###################
 #  my 10k config  #
 ###################
-source ~/.pl10krc
+# Switch between prompt styles by editing the line below:
+# source ~/.pl10krc    # Original style (detailed)
+# source ~/.pl10krc2   # Minimal style (lean, performance-focused)
+source ~/.pl10krc2
 
 
 #########
