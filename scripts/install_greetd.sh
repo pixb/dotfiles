@@ -25,6 +25,7 @@ function trizen_install() {
 pacman_install greetd
 pacman_install greetd-gtkgreet
 pacman_install cage
+pacman_install wlr-randr
 pacman_install xdg-user-dirs
 pacman_install xdg-utils
 pacman_install xorg-xwayland
@@ -39,6 +40,8 @@ fi
 sudo ln -sf $(pwd)/greetd/config.toml /etc/greetd/config.toml
 sudo cp $(pwd)/greetd/environments /etc/greetd/environments
 sudo cp $(pwd)/greetd/gtkgreet.css /etc/greetd/gtkgreet.css
+sudo cp $(pwd)/greetd/start-greeter.sh /etc/greetd/start-greeter.sh
+sudo chmod 755 /etc/greetd/start-greeter.sh
 sudo cp "$(pwd)/.local/share/wallpaper" /etc/greetd/background.jpg
 sudo chmod 644 /etc/greetd/background.jpg
 if ! groups greeter 2>/dev/null | grep -qw video; then

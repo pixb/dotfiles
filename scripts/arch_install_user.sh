@@ -279,3 +279,35 @@ systemctl_enable bluetooth
 systemctl_start bluetooth
 pacman_install nethogs
 pacman_install fd
+
+# samba
+pacman_install samba
+if [ ! -e /etc/samba/smb.conf ]; then
+  sudo tee /etc/samba/smb.conf <<'EOF'
+[global]
+   workgroup = WORKGROUP
+   server string = %h server
+   security = user
+   map to guest = Bad User
+   dns proxy = no
+
+[homes]
+   comment = Home Directories
+   browseable = no
+   writable = yes
+   valid users = %S
+
+[work]
+   comment = work Shared Folder
+   path = /home/pix/work
+   browseable = yes
+   writable = yes
+   guest ok = no
+   valid users = @users
+EOF
+fi
+mkdir -p ~/work
+systemctl_enable smb
+systemctl_start smb
+systemctl_enable nmb
+systemctl_start nmb

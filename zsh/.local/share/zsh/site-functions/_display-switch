@@ -1,0 +1,8 @@
+#compdef display-switch
+
+_display_switch() {
+  _arguments \
+    '1:command:(primary secondary both)'
+}
+
+_display_switch "$@"

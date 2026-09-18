@@ -139,6 +139,8 @@ ___MY_VMOPTIONS_SHELL_FILE="${HOME}/.jetbrains.vmoptions.sh"
 #################
 #  zinit plugins
 #################
+# custom completions
+fpath=(~/.local/share/zsh/site-functions $fpath)
 # Ensure compinit is loaded before loading plugins
 autoload -Uz compinit && compinit
 zinit light romkatv/powerlevel10k

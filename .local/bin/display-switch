@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# display-switch - 切换显示器输出
+# 用法: display-switch [primary|secondary|both]
+
+case "$1" in
+  primary)
+    wlr-randr --output HDMI-A-1 --off
+    echo "仅主屏 (eDP-1)"
+    ;;
+  secondary)
+    wlr-randr --output eDP-1 --off
+    echo "仅副屏 (HDMI-A-1)"
+    ;;
+  both| "")
+    wlr-randr --output HDMI-A-1 --on --mode 1920x1080@60Hz --pos 2560,0
+    wlr-randr --output eDP-1 --on --mode 2560x1600@165Hz --pos 0,0
+    echo "双屏"
+    ;;
+  *)
+    echo "用法: display-switch [primary|secondary|both]"
+    exit 1
+    ;;
+esac

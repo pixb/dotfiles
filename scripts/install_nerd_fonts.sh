@@ -1,10 +1,17 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 set -e
 
 COLOR_GREEN='\033[0;32m'
 COLOR_RED='\033[0;31m'
 COLOR_YELLOW='\033[0;33m'
 COLOR_NC='\033[0m'
+
+for cmd in wget unzip fc-cache; do
+  if ! command -v "$cmd" &>/dev/null; then
+    echo -e "${COLOR_RED}Error: $cmd is not installed${COLOR_NC}"
+    exit 1
+  fi
+done
 
 DOWNLOADS_PATH="${HOME}/Downloads"
 
@@ -34,11 +41,20 @@ install_font() {
   unzip -q -o "${DOWNLOADS_PATH}/${zip_name}" -d "$extract_dir"
 
   local moved=0
+  local use_sudo=""
+  if [ ! -w /usr/share/fonts/OTF/ ] 2>/dev/null; then
+    if sudo -n true 2>/dev/null; then
+      use_sudo="sudo"
+    else
+      echo -e "${COLOR_YELLOW}Need sudo password for font installation${COLOR_NC}"
+      use_sudo="sudo"
+    fi
+  fi
   for f in "$extract_dir"/*.otf; do
-    [ -f "$f" ] && sudo mv "$f" /usr/share/fonts/OTF/ && moved=1
+    [ -f "$f" ] && $use_sudo mv "$f" /usr/share/fonts/OTF/ && moved=1
   done
   for f in "$extract_dir"/*.ttf; do
-    [ -f "$f" ] && sudo mv "$f" /usr/share/fonts/TTF/ && moved=1
+    [ -f "$f" ] && $use_sudo mv "$f" /usr/share/fonts/TTF/ && moved=1
   done
 
   if [ "$moved" -eq 1 ]; then
