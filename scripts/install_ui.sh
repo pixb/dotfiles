@@ -68,6 +68,7 @@ pacman_install dunst
 pacman_install libnotify
 
 pacman_install qutebrowser
+pacman_install python-adblock
 pacman_install lf
 pacman_install wtype
 pacman_install mpc
@@ -76,9 +77,18 @@ trizen_install dvtm
 trizen_install waylock
 trizen_install wlrctl
 
+# qutebrowser dependencies
+pacman_install dictd
+trizen_install dict-gcide
+pacman_install qrtool
+pacman_install swayimg
+pacman_install zathura
+pacman_install zathura-pdf-mupdf
+
 cd "${DOTFILES_PATH}" || exit
 stow -t ~ foot
 stow -t ~ waybar
 stow -t ~ chrome
 stow -t ~ fcitx5
 stow -t ~ dunst
+stow -t ~ qutebrowser

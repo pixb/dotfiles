@@ -1,0 +1,18 @@
+/* qutebroser/styles/black.css */
+/* @author nate zhou */
+/* @since 2025 */
+/* paper background */
+
+html {
+    background-color: #f5e6c8 !important;
+    color: #4a3728 !important;
+}
+
+body {
+    background-color: #f5e6c8 !important;
+    color: #4a3728 !important;
+}
+
+a {
+    color: #8b4513 !important;
+}

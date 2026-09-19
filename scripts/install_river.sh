@@ -71,7 +71,7 @@ step2_install_river() {
     [ ! -d "$src_dir" ] && git clone https://codeberg.org/river/river "$src_dir"
     cd "$src_dir"
     export PATH="$ZIG_PATH_RIVER:$PATH"
-    sudo env "PATH=$PATH" SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt "$ZIG_PATH_RIVER/zig" build -Doptimize=ReleaseSafe --prefix /usr/local install
+    sudo env "PATH=$PATH" SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt "$ZIG_PATH_RIVER/zig" build -Doptimize=ReleaseSafe -Dxwayland=true --prefix /usr/local install
     log_ok "river 安装完成"
   fi
 }
