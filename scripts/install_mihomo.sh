@@ -156,7 +156,8 @@ if [ -d "$DOTFILES_DIR/mihomo/etc/mihomo" ]; then
   fi
   # Use stow to link config
   cd "$DOTFILES_DIR"
-  sudo stow -t / -v mihomo 2>&1 | log_info
+  STOW_OUTPUT=$(sudo stow -t / -v mihomo 2>&1)
+  log_info "$STOW_OUTPUT"
   log_info "配置已通过 stow 链接"
 else
   log_warn "未找到 mihomo/etc/mihomo 目录，跳过 stow 配置"
@@ -178,6 +179,7 @@ LimitNPROC=500
 LimitNOFILE=1000000
 CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW CAP_NET_BIND_SERVICE CAP_SYS_TIME CAP_SYS_PTRACE
 AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW CAP_NET_BIND_SERVICE CAP_SYS_TIME CAP_SYS_PTRACE
+Environment="SAFE_PATHS=/opt/mihomo"
 Restart=always
 RestartSec=10
 ExecStartPre=/usr/bin/sleep 1
