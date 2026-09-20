@@ -126,17 +126,40 @@ else
   log_info "geosite.dat 已存在，跳过下载"
 fi
 
-# === Copy config from dotfiles ===
-if [ -f "$DOTFILES_DIR/mihomo/etc/mihomo/config.yaml" ]; then
-  if [ -f "$CONFIG_DIR/config.yaml" ]; then
+# === Setup share group for stow ===
+log_info "配置 share 组..."
+if ! getent group share >/dev/null 2>&1; then
+  sudo groupadd share
+  log_info "share 组已创建"
+fi
+
+# Add pix and mihomo users to share group
+sudo usermod -aG share "$(whoami)" 2>/dev/null || true
+sudo usermod -aG share mihomo 2>/dev/null || true
+
+# Set permissions for /home/pix
+sudo chown pix:share /home/pix
+sudo chmod 750 /home/pix
+
+# Set permissions for dotfiles
+sudo chown -R pix:share "$DOTFILES_DIR"
+find "$DOTFILES_DIR" -type d -exec sudo chmod 750 {} \;
+find "$DOTFILES_DIR" -type f -exec sudo chmod 640 {} \;
+
+# === Stow config management ===
+log_info "使用 stow 管理配置..."
+if [ -d "$DOTFILES_DIR/mihomo/etc/mihomo" ]; then
+  # Remove existing config if it's a regular file (not symlink)
+  if [ -f "$CONFIG_DIR/config.yaml" ] && [ ! -L "$CONFIG_DIR/config.yaml" ]; then
     log_warn "备份现有配置..."
-    sudo cp "$CONFIG_DIR/config.yaml" "$CONFIG_DIR/config.yaml.bak.$(date +%s)"
+    sudo mv "$CONFIG_DIR/config.yaml" "$CONFIG_DIR/config.yaml.bak.$(date +%s)"
   fi
-  sudo cp "$DOTFILES_DIR/mihomo/etc/mihomo/config.yaml" "$CONFIG_DIR/config.yaml"
-  sudo chown mihomo:mihomo "$CONFIG_DIR/config.yaml"
-  log_info "配置文件已复制"
+  # Use stow to link config
+  cd "$DOTFILES_DIR"
+  sudo stow -t / -v mihomo 2>&1 | log_info
+  log_info "配置已通过 stow 链接"
 else
-  log_warn "未找到 mihomo/etc/mihomo/config.yaml，跳过配置复制"
+  log_warn "未找到 mihomo/etc/mihomo 目录，跳过 stow 配置"
 fi
 
 # === Enable and start mihomo ===
@@ -149,6 +172,8 @@ After=network.target NetworkManager.service systemd-networkd.service
 
 [Service]
 Type=simple
+User=mihomo
+Group=mihomo
 LimitNPROC=500
 LimitNOFILE=1000000
 CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW CAP_NET_BIND_SERVICE CAP_SYS_TIME CAP_SYS_PTRACE
@@ -275,10 +300,10 @@ echo ""
 echo "日志："
 echo "  journalctl -u mihomo -f     # 实时日志"
 echo ""
-echo "配置管理："
-echo "  编辑源文件: ~/dotfiles/mihomo/etc/mihomo/config.yaml"
-echo "  复制到系统: sudo cp ~/dotfiles/mihomo/etc/mihomo/config.yaml /etc/mihomo/config.yaml"
-echo "  重启服务:   sudo systemctl restart mihomo"
+echo "配置管理 (stow)："
+echo "  cd ~/dotfiles"
+echo "  sudo stow -t / mihomo       # 链接配置"
+echo "  sudo stow -t / -D mihomo    # 取消链接"
 echo ""
 echo "Web UI："
 echo "  http://127.0.0.1:9090/ui    # MetacubexD 管理界面"
@@ -287,4 +312,4 @@ echo "配置文件：${CONFIG_DIR}/config.yaml"
 echo "GeoIP 数据：/opt/mihomo/geoip.dat"
 echo "GeoSite 数据：/opt/mihomo/geosite.dat"
 echo ""
-echo -e "${COLOR_YELLOW}注意：请在 ~/dotfiles/mihomo/etc/mihomo/ 中修改配置，然后复制到 /etc/mihomo/${COLOR_NC}"
+echo -e "${COLOR_YELLOW}注意：请在 ~/dotfiles/mihomo/etc/mihomo/ 中修改配置${COLOR_NC}"
