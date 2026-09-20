@@ -1742,7 +1742,7 @@
                 .event = .{
                     .click = .{
                         .pressed = .{
-                            .spawn = .{ .argv = .{"footclient"} },
+                            .spawn = .{ .argv = .{"foot"} },
                         },
                     },
                 },
