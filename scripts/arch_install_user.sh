@@ -303,5 +303,3 @@ systemctl_enable smb
 systemctl_start smb
 systemctl_enable nmb
 systemctl_start nmb
-
-aur_install v2raya-bin
