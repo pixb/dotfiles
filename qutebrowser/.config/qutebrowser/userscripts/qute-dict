@@ -16,18 +16,13 @@
 DICT_TEMP=${XDG_RUNTIME_DIR}/qutebrowser/qutedict
 
 if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
-    TERM="footclient -T Floating_Term \
-                     -o main.font=SourceCodePro:size=20\
+    FLOAT_TERM="footclient -T Floating_Term \
+                     -o main.font=NotoSansMNFM:size=20 \
                      -o colors.alpha=0.9"
 elif [ -n "$XAUTHORITY" ]; then
-    TERM="st -T Floating_Term -f SourceCodePro:size=20"
+    FLOAT_TERM="st -T Floating_Term -f NotoSansMNFM:size=20"
 fi
 
-# remove spaces around word
-#DICT_WORD="$(echo $QUTE_SELECTED_TEXT | sed 's/^ *//; s/ *$//; s/ \{1,\}/ /g')"
-#/usr/bin/dict "$DICT_WORD" > "$DICT_TEMP" 2>&1
-
-# or just don't quote:
 /usr/bin/dict $QUTE_SELECTED_TEXT > "$DICT_TEMP" 2>&1
 
-$TERM /usr/bin/less "$DICT_TEMP"
+$FLOAT_TERM /usr/bin/less "$DICT_TEMP"

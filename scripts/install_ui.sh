@@ -13,6 +13,24 @@ function pacman_install() {
   fi
 }
 
+function systemctl_enable() {
+  if [ "$(systemctl is-enabled "$1" 2>/dev/null || true)" != "enabled" ]; then
+    echo -e "${COLOR_GREEN}enabling $1${COLOR_NC}"
+    sudo systemctl enable "$1"
+  else
+    echo -e "${COLOR_GREEN}$1 already enabled${COLOR_NC}"
+  fi
+}
+
+function systemctl_start() {
+  if [ "$(systemctl is-active "$1" 2>/dev/null || true)" != "active" ]; then
+    echo -e "${COLOR_GREEN}starting $1${COLOR_NC}"
+    sudo systemctl start "$1"
+  else
+    echo -e "${COLOR_GREEN}$1 already running${COLOR_NC}"
+  fi
+}
+
 function trizen_install() {
   if pacman -Qi "$1" &>/dev/null; then
     echo -e "${COLOR_GREEN}$1 is installed${COLOR_NC}"
@@ -80,6 +98,8 @@ trizen_install wlrctl
 # qutebrowser dependencies
 pacman_install dictd
 trizen_install dict-gcide
+systemctl_enable dictd
+systemctl_start dictd
 pacman_install qrtool
 pacman_install swayimg
 pacman_install zathura
