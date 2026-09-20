@@ -303,3 +303,9 @@ systemctl_enable smb
 systemctl_start smb
 systemctl_enable nmb
 systemctl_start nmb
+
+aur_install herdr-bin
+npm install -g --allow-scripts=opencode-ai opencode-ai
+
+# === pi agent ===
+npm install -g --ignore-scripts @earendil-works/pi-coding-agent
