@@ -137,14 +137,11 @@ fi
 sudo usermod -aG share "$(whoami)" 2>/dev/null || true
 sudo usermod -aG share mihomo 2>/dev/null || true
 
-# Set permissions for /home/pix
-sudo chown pix:share /home/pix
-sudo chmod 750 /home/pix
-
-# Set permissions for dotfiles
-sudo chown -R pix:share "$DOTFILES_DIR"
-find "$DOTFILES_DIR" -type d -exec sudo chmod 750 {} \;
-find "$DOTFILES_DIR" -type f -exec sudo chmod 640 {} \;
+# Set group permissions ONLY on mihomo config directory
+# This allows mihomo user (in share group) to read configs via stow symlinks
+sudo chown -R pix:share "$DOTFILES_DIR/mihomo"
+find "$DOTFILES_DIR/mihomo" -type d -exec sudo chmod 750 {} \;
+find "$DOTFILES_DIR/mihomo" -type f -exec sudo chmod 640 {} \;
 
 # === Stow config management ===
 log_info "使用 stow 管理配置..."
@@ -225,8 +222,10 @@ if [ -f "$CONFIG_DIR/config.yaml" ]; then
     sudo sed -i '/^external-ui:/a geox-url:\n  geo-ip: /opt/mihomo/geoip.dat\n  geo-site: /opt/mihomo/geosite.dat' "$CONFIG_DIR/config.yaml"
   fi
   
-  # Ensure correct ownership
-  sudo chown mihomo:mihomo "$CONFIG_DIR/config.yaml"
+  # Ensure correct ownership (skip if symlink - stow manages the source file)
+  if [ ! -L "$CONFIG_DIR/config.yaml" ]; then
+    sudo chown mihomo:mihomo "$CONFIG_DIR/config.yaml"
+  fi
   
   # Restart mihomo to apply config
   sudo systemctl restart mihomo
