@@ -108,24 +108,62 @@ pacman_install iptables-nft
 CONFIG_DIR="/etc/mihomo"
 sudo mkdir -p "$CONFIG_DIR"
 sudo mkdir -p /var/log/mihomo
+sudo mkdir -p /opt/mihomo
 
-# === Stow config management ===
-log_info "使用 stow 管理配置..."
-if [ -d "$DOTFILES_DIR/mihomo/etc/mihomo" ]; then
-  # Backup existing config if not a symlink
-  if [ -f "$CONFIG_DIR/config.yaml" ] && [ ! -L "$CONFIG_DIR/config.yaml" ]; then
-    log_warn "备份现有配置..."
-    sudo mv "$CONFIG_DIR/config.yaml" "$CONFIG_DIR/config.yaml.bak.$(date +%s)"
-  fi
-  # Use stow to link config
-  cd "$DOTFILES_DIR"
-  sudo stow -t / -v mihomo 2>&1 | log_info
-  log_info "配置已通过 stow 链接"
+# === Download GeoIP/GeoSite databases ===
+log_info "下载 GeoIP/GeoSite 数据库..."
+if [ ! -f /opt/mihomo/geoip.dat ]; then
+  sudo curl -fSL "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat" -o /opt/mihomo/geoip.dat
+  log_info "geoip.dat 已下载"
 else
-  log_warn "未找到 mihomo/etc/mihomo 目录，跳过 stow 配置"
+  log_info "geoip.dat 已存在，跳过下载"
+fi
+
+if [ ! -f /opt/mihomo/geosite.dat ]; then
+  sudo curl -fSL "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat" -o /opt/mihomo/geosite.dat
+  log_info "geosite.dat 已下载"
+else
+  log_info "geosite.dat 已存在，跳过下载"
+fi
+
+# === Copy config from dotfiles ===
+if [ -f "$DOTFILES_DIR/mihomo/etc/mihomo/config.yaml" ]; then
+  if [ -f "$CONFIG_DIR/config.yaml" ]; then
+    log_warn "备份现有配置..."
+    sudo cp "$CONFIG_DIR/config.yaml" "$CONFIG_DIR/config.yaml.bak.$(date +%s)"
+  fi
+  sudo cp "$DOTFILES_DIR/mihomo/etc/mihomo/config.yaml" "$CONFIG_DIR/config.yaml"
+  sudo chown mihomo:mihomo "$CONFIG_DIR/config.yaml"
+  log_info "配置文件已复制"
+else
+  log_warn "未找到 mihomo/etc/mihomo/config.yaml，跳过配置复制"
 fi
 
 # === Enable and start mihomo ===
+# Create/update systemd service with correct config path
+log_info "配置 systemd 服务..."
+sudo tee /etc/systemd/system/mihomo.service > /dev/null << 'EOF'
+[Unit]
+Description=mihomo Daemon
+After=network.target NetworkManager.service systemd-networkd.service
+
+[Service]
+Type=simple
+LimitNPROC=500
+LimitNOFILE=1000000
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW CAP_NET_BIND_SERVICE CAP_SYS_TIME CAP_SYS_PTRACE
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW CAP_NET_BIND_SERVICE CAP_SYS_TIME CAP_SYS_PTRACE
+Restart=always
+RestartSec=10
+ExecStartPre=/usr/bin/sleep 1
+ExecStart=/usr/bin/mihomo -d /etc/mihomo
+ExecReload=/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
 systemctl_enable mihomo
 systemctl_start mihomo
 
@@ -133,7 +171,6 @@ systemctl_start mihomo
 log_info "安装 Web UI (MetacubexD)..."
 UI_DIR="/opt/mihomo/ui"
 if [ ! -d "$UI_DIR" ]; then
-  sudo mkdir -p /opt/mihomo
   cd /tmp
   if command -v curl &>/dev/null; then
     sudo curl -fSL "https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip" -o metacubexd.zip
@@ -148,13 +185,23 @@ else
   log_info "MetacubexD UI 已存在，跳过安装"
 fi
 
-# === Enable external-ui in config ===
+# === Enable external-ui and geodata in config ===
 if [ -f "$CONFIG_DIR/config.yaml" ]; then
   if ! grep -q "^external-ui:" "$CONFIG_DIR/config.yaml"; then
     log_info "启用 external-ui 配置..."
     sudo sed -i '/^external-controller:/a external-ui: /opt/mihomo/ui' "$CONFIG_DIR/config.yaml"
   fi
-  # Restart mihomo to apply UI config
+  
+  # Add geodata paths if not present
+  if ! grep -q "geo-ip:" "$CONFIG_DIR/config.yaml"; then
+    log_info "添加 geodata 路径配置..."
+    sudo sed -i '/^external-ui:/a geox-url:\n  geo-ip: /opt/mihomo/geoip.dat\n  geo-site: /opt/mihomo/geosite.dat' "$CONFIG_DIR/config.yaml"
+  fi
+  
+  # Ensure correct ownership
+  sudo chown mihomo:mihomo "$CONFIG_DIR/config.yaml"
+  
+  # Restart mihomo to apply config
   sudo systemctl restart mihomo
 fi
 
@@ -228,14 +275,16 @@ echo ""
 echo "日志："
 echo "  journalctl -u mihomo -f     # 实时日志"
 echo ""
-echo "配置管理 (stow)："
-echo "  cd ~/dotfiles"
-echo "  sudo stow -t / mihomo       # 链接配置"
-echo "  sudo stow -t / -D mihomo    # 取消链接"
+echo "配置管理："
+echo "  编辑源文件: ~/dotfiles/mihomo/etc/mihomo/config.yaml"
+echo "  复制到系统: sudo cp ~/dotfiles/mihomo/etc/mihomo/config.yaml /etc/mihomo/config.yaml"
+echo "  重启服务:   sudo systemctl restart mihomo"
 echo ""
 echo "Web UI："
 echo "  http://127.0.0.1:9090/ui    # MetacubexD 管理界面"
 echo ""
 echo "配置文件：${CONFIG_DIR}/config.yaml"
+echo "GeoIP 数据：/opt/mihomo/geoip.dat"
+echo "GeoSite 数据：/opt/mihomo/geosite.dat"
 echo ""
-echo -e "${COLOR_YELLOW}注意：配置通过 stow 管理，请在 ~/dotfiles/mihomo/etc/mihomo/ 中修改${COLOR_NC}"
+echo -e "${COLOR_YELLOW}注意：请在 ~/dotfiles/mihomo/etc/mihomo/ 中修改配置，然后复制到 /etc/mihomo/${COLOR_NC}"
