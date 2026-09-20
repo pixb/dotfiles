@@ -233,7 +233,7 @@ if [ -f "$CONFIG_DIR/config.yaml" ]; then
 fi
 
 # === Setup TUN transparent proxy ===
-log_info "配置 TUN 模式网络..."
+log_info "配置 TUN 透明代理..."
 
 # Enable ip_forward
 sudo sysctl -w net.ipv4.ip_forward=1
@@ -241,53 +241,11 @@ if ! grep -q "^net.ipv4.ip_forward" /etc/sysctl.d/99-mihomo.conf 2>/dev/null; th
   echo "net.ipv4.ip_forward = 1" | sudo tee /etc/sysctl.d/99-mihomo.conf > /dev/null
 fi
 
-# Setup iptables service for transparent proxy
-sudo tee /etc/systemd/system/mihomo-tun.service > /dev/null << 'EOF'
-[Unit]
-Description=mihomo TUN Setup
-After=network.target
-Before=mihomo.service
+# TUN mode is configured in config.yaml with auto-route and auto-redirect
+# No additional iptables setup needed - mihomo handles it automatically
 
-[Service]
-Type=oneshot
-ExecStart=/bin/sh -c '\
-  sysctl -w net.ipv4.ip_forward=1 && \
-  iptables -t nat -A PREROUTING -p tcp -j REDIRECT --to-ports 7892 && \
-  iptables -t nat -A PREROUTING -p udp -j REDIRECT --to-ports 7892 && \
-  iptables -t nat -A OUTPUT -p tcp -d 127.0.0.0/8 -j RETURN && \
-  iptables -t nat -A OUTPUT -p tcp -j REDIRECT --to-ports 7892'
-ExecStop=/bin/sh -c '\
-  iptables -t nat -D PREROUTING -p tcp -j REDIRECT --to-ports 7892 && \
-  iptables -t nat -D PREROUTING -p udp -j REDIRECT --to-ports 7892 && \
-  iptables -t nat -D OUTPUT -p tcp -d 127.0.0.0/8 -j RETURN && \
-  iptables -t nat -D OUTPUT -p tcp -j REDIRECT --to-ports 7892'
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-sudo systemctl daemon-reload
-systemctl_enable mihomo-tun
-systemctl_start mihomo-tun
-
-# === Setup proxy environment variables ===
-SHELL_RC="$HOME/.zshrc"
-[ ! -f "$HOME/.zshrc" ] && SHELL_RC="$HOME/.bashrc"
-
-if ! grep -q "mihomo proxy" "$SHELL_RC" 2>/dev/null; then
-  cat >> "$SHELL_RC" << 'EOF'
-
-# mihomo proxy
-export http_proxy=http://127.0.0.1:7890
-export https_proxy=http://127.0.0.1:7890
-export all_proxy=socks5://127.0.0.1:7890
-export no_proxy=localhost,127.0.0.1,::1
-EOF
-  log_info "代理环境变量已添加到 ${SHELL_RC}"
-else
-  log_info "代理环境变量已存在，跳过"
-fi
+# === TUN mode note ===
+log_info "TUN 模式已配置，无需设置代理环境变量"
 
 # === Print usage ===
 echo ""
