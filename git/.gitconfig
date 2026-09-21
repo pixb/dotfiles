@@ -51,11 +51,9 @@ tool = nvimdiff
 # 	path = ~/dev/linux-demo/git/.gitconfig
 [mergetool "nvimdiff"]
   cmd = nvim -d $LOCAL $BASE $REMOTE $MERGED -c '$wincmd w' -c 'wincmd J'
-
-[commit]
-	template = ~/dev/linux-demo/git/.gitmessage
-	
 [safe]
 	directory = /work/docker/docker-prometheus
 [http]
 	postBuffer = 524288000
+[commit]
+	template = /home/pix/.gitmessage

@@ -23,6 +23,6 @@ elif [ -n "$XAUTHORITY" ]; then
     FLOAT_TERM="st -T Floating_Term -f NotoSansMNFM:size=20"
 fi
 
-/usr/bin/dict $QUTE_SELECTED_TEXT > "$DICT_TEMP" 2>&1
+/usr/bin/dict "$QUTE_SELECTED_TEXT" > "$DICT_TEMP" 2>&1
 
-$FLOAT_TERM /usr/bin/less "$DICT_TEMP"
+eval $FLOAT_TERM /usr/bin/less "$DICT_TEMP"
