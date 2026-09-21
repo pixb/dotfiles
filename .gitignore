@@ -24,3 +24,5 @@ go/.config/go/telemetry/
 # uv binaries (installed by arch_install_user.sh)
 .local/bin/uv
 .local/bin/uvx
+.local/bin/env
+.local/bin/env.fish
