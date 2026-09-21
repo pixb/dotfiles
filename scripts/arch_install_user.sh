@@ -216,6 +216,15 @@ if command -v pyenv &>/dev/null; then
   fi
 fi
 
+# === uv (Python package manager) ===
+if command -v uv &>/dev/null; then
+  echo_is_existed "uv"
+else
+  echo_not_found "uv"
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  export PATH="$HOME/.local/bin:$PATH"
+fi
+
 # === ranger ===
 pip3 install setuptools
 aur_install ranger-git
