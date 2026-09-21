@@ -18,11 +18,12 @@ DICT_TEMP=${XDG_RUNTIME_DIR}/qutebrowser/qutedict
 if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
     FLOAT_TERM="footclient -T Floating_Term \
                      -o main.font=NotoSansMNFM:size=20 \
-                     -o colors.alpha=0.9"
+                     -o colors-dark.alpha=0.9"
 elif [ -n "$XAUTHORITY" ]; then
     FLOAT_TERM="st -T Floating_Term -f NotoSansMNFM:size=20"
 fi
 
-/usr/bin/dict "$QUTE_SELECTED_TEXT" > "$DICT_TEMP" 2>&1
+WORD="${QUTE_SELECTED_TEXT:-$(wl-paste 2>/dev/null || xclip -o 2>/dev/null)}"
+/usr/bin/dict "$WORD" > "$DICT_TEMP" 2>&1
 
 eval $FLOAT_TERM /usr/bin/less "$DICT_TEMP"
