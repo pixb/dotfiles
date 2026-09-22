@@ -320,11 +320,16 @@ fi
 # === mutt/neomutt email client ===
 # mutt config managed by stow via install_ui.sh (stow -t ~ mutt)
 # create maildir structure for accounts
-mkdir -p ~/doc/mail/account-{private,public,unixchad}
+mkdir -p ~/doc/mail/account-{gmail,private,public,unixchad}
 # initial isyncrc if not exists
 if [ ! -f "${HOME}/.config/isyncrc" ] && [ -f "${DOTFILES_PATH}/mutt/.config/isyncrc.example" ]; then
     cp "${DOTFILES_PATH}/mutt/.config/isyncrc.example" "${HOME}/.config/isyncrc"
     echo -e "${COLOR_YELLOW}Please edit ~/.config/isyncrc with your email accounts${COLOR_NC}"
+fi
+# initial Gmail account config template
+if [ ! -f "${HOME}/.config/mutt/account-gmail.muttrc" ] && [ -f "${DOTFILES_PATH}/mutt/.config/mutt/account-gmail.muttrc.example" ]; then
+    cp "${DOTFILES_PATH}/mutt/.config/mutt/account-gmail.muttrc.example" "${HOME}/.config/mutt/account-gmail.muttrc"
+    echo -e "${COLOR_YELLOW}Please edit ~/.config/mutt/account-gmail.muttrc with your Gmail address${COLOR_NC}"
 fi
 
 pacman_install pipewire

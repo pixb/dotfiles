@@ -1,0 +1,30 @@
+# vim:ft=conf
+# isyncrc Gmail template for mbsync
+# Copy to ~/.config/isyncrc and edit
+
+## Gmail Account
+IMAPAccount account-gmail
+Host imap.gmail.com
+Port 993
+User YOUR_EMAIL@gmail.com
+PassCmd "/usr/share/neomutt/oauth2/mutt_oauth2.py --decryption-pipe 'gpg --decrypt --pinentry-mode loopback' -t ~/.cache/mutt/oauth-gmail"
+TLSType IMAPS
+AuthMechs XOAUTH2
+
+IMAPStore account-gmail-remote
+Account account-gmail
+
+MaildirStore account-gmail-local
+Path ~/doc/mail/account-gmail/
+Inbox ~/doc/mail/account-gmail/INBOX
+SubFolders Verbatim
+
+Channel account-gmail
+Far :account-gmail-remote:
+Near :account-gmail-local:
+Patterns *
+Expunge both
+CopyArrivalDate yes
+Sync All
+Create Near
+SyncState *

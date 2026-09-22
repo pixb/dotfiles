@@ -1,0 +1,20 @@
+# vim:ft=muttrc
+# Gmail account config template for neomutt
+# @author nate zhou
+# @since 2025
+# Copy to ~/.config/mutt/account-gmail.muttrc and edit
+
+set folder = "~/doc/mail/account-gmail"
+unmailboxes *
+set spoolfile = "+INBOX"
+set trash = "+Deleted"
+set postponed = "+Drafts"
+mailboxes "=INBOX" "=Drafts" "=Sent" "=Junk" "=Deleted" "=Archive"
+
+set smtp_url = "smtp://YOUR_EMAIL@gmail.com@smtp.gmail.com:587"
+set smtp_authenticators = "xoauth2"
+set smtp_oauth_refresh_command = "/usr/share/neomutt/oauth2/mutt_oauth2.py --decryption-pipe 'gpg --decrypt --pinentry-mode loopback' ~/.cache/mutt/oauth-gmail"
+set from = YOUR_EMAIL@gmail.com
+set realname = "Your Name"
+set ssl_force_tls = yes
+set ssl_starttls = yes
