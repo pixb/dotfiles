@@ -184,7 +184,7 @@ cd "${SCRIPT_DIR}" || exit
 pacman_install neovim openssh tk fzf the_silver_searcher
 pacman_install tmux go ripgrep lazygit imagemagick highlight
 pacman_install p7zip rsync cifs-utils smbclient stow
-pacman_install brightnessctl
+pacman_install brightnessctl wob
 
 # ssh service start
 if command -v ssh >/dev/null 2>&1; then

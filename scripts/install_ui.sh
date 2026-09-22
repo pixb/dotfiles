@@ -118,6 +118,7 @@ stow -t ~ fcitx5
 stow -t ~ dunst
 stow -t ~ qutebrowser
 stow -t ~ mpd
+stow -t ~ wob
 
 # enable mpd socket activation (starts on first mpc connection)
 systemctl --user enable --now mpd.socket 2>/dev/null || true
