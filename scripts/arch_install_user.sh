@@ -236,6 +236,26 @@ cd ${SCRIPT_DIR}
 aur_install fastfetch
 pacman_install gdb gcc cmake meson htop btop duf usbutils rust
 
+# === mechrevo laptop drivers (Tongfang EC fan/keyboard control) ===
+if grep -qi 'MECHREVO' /sys/devices/virtual/dmi/id/sys_vendor 2>/dev/null; then
+    pacman_install dkms linux-headers
+    aur_install mechrevo-drivers-dkms
+
+    # compile and install EC fan reader
+    if [ -f "${SCRIPT_DIR}/mechrevo-fan.c" ]; then
+        sudo gcc -O2 -s -o /usr/local/bin/mechrevo-fan "${SCRIPT_DIR}/mechrevo-fan.c"
+        sudo chmod 755 /usr/local/bin/mechrevo-fan
+    fi
+
+    # install fanmode-cron and crontab entry
+    if [ -f "${SCRIPT_DIR}/fanmode-cron" ]; then
+        sudo cp "${SCRIPT_DIR}/fanmode-cron" /usr/local/bin/fanmode-cron
+        sudo chmod 755 /usr/local/bin/fanmode-cron
+        echo '*/5 * * * * root /usr/local/bin/fanmode-cron' | sudo tee /etc/cron.d/fanmode > /dev/null
+        sudo chmod 644 /etc/cron.d/fanmode
+    fi
+fi
+
 if [ ! -d $HOME/.tmux ]; then
   bash ${SCRIPT_DIR}/../tmux/config_tmux.sh
 fi
@@ -274,6 +294,11 @@ fi
 
 systemctl_enable docker
 systemctl_start docker
+
+# === cronie (periodic tasks for damblocks) ===
+pacman_install cronie
+systemctl_enable cronie
+systemctl_start cronie
 
 pacman_install pipewire
 pacman_install pipewire-pulse

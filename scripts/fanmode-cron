@@ -1,0 +1,25 @@
+#!/usr/bin/sh
+# fanmode-cron: Read EC fan duty cycle and signal damblocks
+# Runs as root via /etc/cron.d/fanmode (every 5 minutes)
+# Uses mtime throttle to avoid redundant updates
+
+FAN_UID=$(id -u pix)
+DAMBLOCKS="/run/user/${FAN_UID}/damblocks.pid"
+CACHE="/run/user/${FAN_UID}/mechrevo-fan"
+EC_FAN="/usr/local/bin/mechrevo-fan"
+
+# mtime throttle: skip if updated within last 60 seconds
+if [ -f "$CACHE" ]; then
+    last_update=$(stat -c "%Y" "$CACHE" 2>/dev/null || echo 0)
+    now=$(date +%s)
+    [ $((now - last_update)) -lt 60 ] && exit 0
+fi
+
+# read EC fan duty cycle
+duty=$($EC_FAN r 2>/dev/null)
+
+# write to cache
+echo "$duty" > "$CACHE"
+
+# signal damblocks to refresh (RTMIN+13 = signal 47)
+[ -f "$DAMBLOCKS" ] && kill -47 "$(cat "$DAMBLOCKS")" 2>/dev/null

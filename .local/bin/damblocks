@@ -189,6 +189,16 @@ update_fanmode() {
             0|auto) icon="󱜝" ;;
         esac
         speed="$(grep 'speed:' "$POLICY_IBM" | awk '{print $2}')"
+    elif [ -f "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/mechrevo-fan" ]; then
+        local duty
+        duty="$(cat "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/mechrevo-fan" 2>/dev/null)"
+        [ -n "$duty" ] && speed="${duty}/15"
+        case "$duty" in
+            0)   icon="󱜝" ;; # off
+            [1-5])   icon="󱑰" ;; # low/silent
+            [6-9]|10) icon="󱜝" ;; # balanced
+            1[1-5])  icon="󱑯" ;; # high/performance
+        esac
     fi
     fanmode="${icon}${speed}"
 }
@@ -389,6 +399,7 @@ trap	"update_calcurse;display"   "RTMIN+9"   # -43 .local/bin/calcurse*
 trap	"update_wttr;display"       "RTMIN+10"  # -44 .local/bin/wttr --cron
 trap    "update_mpd;display"        "RTMIN+11"  # -45 .local/bin/damblocks-mpdd
 trap    "update_battery;display"    "RTMIN+12"  # -46 99-damblocks-battery.rules
+trap    "update_fanmode;display"    "RTMIN+13"  # -47 fanmode-cron
 
 while true
 do
