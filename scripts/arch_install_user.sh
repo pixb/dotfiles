@@ -185,6 +185,7 @@ pacman_install neovim openssh tk fzf the_silver_searcher
 pacman_install tmux go ripgrep lazygit imagemagick highlight
 pacman_install p7zip rsync cifs-utils smbclient stow
 pacman_install brightnessctl wob pacman-contrib
+pacman_install neomutt isync
 
 # ssh service start
 if command -v ssh >/dev/null 2>&1; then
@@ -314,6 +315,16 @@ sudo chmod 644 /etc/cron.d/checkupdates
 # initial cache (run after stow creates symlinks)
 if [ -x "${HOME}/.local/bin/checkupdates-cron" ]; then
     "${HOME}/.local/bin/checkupdates-cron" --now || true
+fi
+
+# === mutt/neomutt email client ===
+# mutt config managed by stow via install_ui.sh (stow -t ~ mutt)
+# create maildir structure for accounts
+mkdir -p ~/doc/mail/account-{private,public,unixchad}
+# initial isyncrc if not exists
+if [ ! -f "${HOME}/.config/isyncrc" ] && [ -f "${DOTFILES_PATH}/mutt/.config/isyncrc.example" ]; then
+    cp "${DOTFILES_PATH}/mutt/.config/isyncrc.example" "${HOME}/.config/isyncrc"
+    echo -e "${COLOR_YELLOW}Please edit ~/.config/isyncrc with your email accounts${COLOR_NC}"
 fi
 
 pacman_install pipewire

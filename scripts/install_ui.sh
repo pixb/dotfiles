@@ -119,6 +119,7 @@ stow -t ~ dunst
 stow -t ~ qutebrowser
 stow -t ~ mpd
 stow -t ~ wob
+stow -t ~ mutt
 
 # enable mpd socket activation (starts on first mpc connection)
 systemctl --user enable --now mpd.socket 2>/dev/null || true

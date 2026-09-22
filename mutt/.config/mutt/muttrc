@@ -1,0 +1,53 @@
+# vim:ft=muttrc
+# @author nate zhou
+# @since 2023,2024,2025,2026
+
+source ~/.config/mutt/bindings.muttrc
+source ~/.config/mutt/colors.neomuttrc
+
+set editor = "nvim"
+
+set index_format="%3C %Z %[%Y-%m-%d %H:%M] %-12.12L %<l?%4l&%4c> %s"
+set auto_tag = yes
+set compose_show_preview = yes
+
+# GPG encryption and signature
+set crypt_use_gpgme=yes
+set postpone_encrypt = yes
+set pgp_self_encrypt = yes
+set crypt_use_pka = no
+set crypt_autosign = no
+set crypt_autoencrypt = no
+set crypt_autopgp = yes
+
+## group conversation
+set sort=threads
+set sort_aux=reverse-last-date-received
+
+## sidebar
+set sidebar_width=18
+set sidebar_visible
+set sidebar_short_path
+set sidebar_folder_indent
+set sidebar_format = "%B %* [%?N?%N / ?%S]"
+set mail_check_stats
+
+## auto read html messages in w3m
+set mailcap_path = ~/.config/mutt/mailcap
+auto_view text/html
+
+### sync offline mail nc (Shift+S)
+macro index,pager S "<sync-mailbox><enter-command>unset wait_key<enter><shell-escape>$HOME/.local/bin/mbs<enter><enter-command>set wait_key<enter>" "Sync Mailbox"
+
+# accounts
+source "~/.config/mutt/account-private.muttrc"
+source "~/.config/mutt/account-public.muttrc"
+source "~/.config/mutt/account-unixchad.muttrc"
+
+## switch accounts (,+n)
+folder-hook 'account-private' 'source ~/.config/mutt/account-private.muttrc'
+macro index ,1 "<enter-command>unmailboxes *<enter><enter-command>source ~/.config/mutt/account-private.muttrc<enter><sync-mailbox><change-folder>!<enter>"
+folder-hook 'account-public' 'source ~/.config/mutt/account-public.muttrc'
+macro index ,2 "<enter-command>unmailboxes *<enter><enter-command>source ~/.config/mutt/account-public.muttrc<enter><sync-mailbox><change-folder>!<enter>"
+folder-hook 'account-unixchad' 'source ~/.config/mutt/account-unixchad.muttrc'
+macro index ,3 "<enter-command>unmailboxes *<enter><enter-command>source ~/.config/mutt/account-unixchad.muttrc<enter><sync-mailbox><change-folder>!<enter>"

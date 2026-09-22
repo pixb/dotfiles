@@ -1,0 +1,24 @@
+# vim:ft=muttrc
+# account config example for mutt/neomutt
+# @author nate zhou
+# @since 2023,2024,2025
+
+set folder = "~/doc/mail/account-unixchad"
+unmailboxes *
+set spoolfile = "+INBOX"
+unset record # outlook and gmail auto saves sent to here
+set trash = "+Deleted" # delete mails will be saved to here
+set postponed = "+Drafts"
+mailboxes "=INBOX" "=Drafts" "=Sent" "=Junk" "=Deleted" "=Archive"
+
+set smtp_url = "smtp://gnuunixchad@outlook.com@smtp.office365.com:587"
+set realname = "nate zhou"
+set smtp_authenticators = "xoauth2"
+set smtp_oauth_refresh_command = "/usr/share/neomutt/oauth2/mutt_oauth2.py --decryption-pipe 'gpg --decrypt --pinentry-mode default' ~/.cache/mutt/oauth-account2"
+set from=gnuunixchad@outlook.com
+set ssl_force_tls = yes
+set smtp_url=smtp://gnuunixchad@outlook.com@smtp.office365.com:587
+set ssl_starttls = yes
+
+#set pgp_sign_as=0x123456789
+set pgp_sign_as=0x0x6AD94E90CD0B516C
