@@ -107,8 +107,8 @@ pacman_install zathura
 pacman_install zathura-pdf-mupdf
 
 # mpd setup
-mkdir -p "${HOME}/.cache/mpd" "${HOME}/mus/.playlists"
-[ -f "${HOME}/mus/.mpdignore" ] || cp "${DOTFILES_PATH}/mus/.mpdignore" "${HOME}/mus/.mpdignore"
+mkdir -p "${HOME}/.cache/mpd" "${HOME}/Music/.playlists"
+[ -f "${HOME}/Music/.mpdignore" ] || cp "${DOTFILES_PATH}/Music/.mpdignore" "${HOME}/Music/.mpdignore"
 
 cd "${DOTFILES_PATH}" || exit
 stow -t ~ foot
