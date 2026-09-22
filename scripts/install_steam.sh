@@ -71,7 +71,7 @@ pacman_install steam
 
 # === Install optional but recommended packages ===
 echo -e "${COLOR_GREEN}Installing optional dependencies...${COLOR_NC}"
-pacman_install lib32-mesa lib32-vulkan-icd-loader vulkan-tools
+pacman_install lib32-mesa lib32-vulkan-icd-loader vulkan-tools lib32-libxtst
 
 # === Wayland / XWayland 检查 ===
 echo -e "${COLOR_GREEN}Checking Wayland/XWayland environment...${COLOR_NC}"
