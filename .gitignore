@@ -26,3 +26,7 @@ go/.config/go/telemetry/
 .local/bin/uvx
 .local/bin/env
 .local/bin/env.fish
+
+# mpd music library (only track .mpdignore)
+mus/*
+!mus/.mpdignore

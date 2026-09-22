@@ -90,6 +90,7 @@ pacman_install python-adblock
 pacman_install lf
 pacman_install wtype
 pacman_install mpc
+pacman_install mpd ncmpcpp
 trizen_install abduco
 trizen_install dvtm
 trizen_install waylock
@@ -105,6 +106,10 @@ pacman_install swayimg
 pacman_install zathura
 pacman_install zathura-pdf-mupdf
 
+# mpd setup
+mkdir -p "${HOME}/.cache/mpd" "${HOME}/mus/.playlists"
+[ -f "${HOME}/mus/.mpdignore" ] || cp "${DOTFILES_PATH}/mus/.mpdignore" "${HOME}/mus/.mpdignore"
+
 cd "${DOTFILES_PATH}" || exit
 stow -t ~ foot
 stow -t ~ waybar
@@ -112,3 +117,12 @@ stow -t ~ chrome
 stow -t ~ fcitx5
 stow -t ~ dunst
 stow -t ~ qutebrowser
+stow -t ~ mpd
+
+# enable mpd socket activation (starts on first mpc connection)
+systemctl --user enable --now mpd.socket 2>/dev/null || true
+
+# ufw: allow mpd http stream from LAN
+if command -v ufw >/dev/null 2>&1; then
+  sudo ufw allow from 192.168.0.0/16 to any port 8000 comment "mpd http stream" 2>/dev/null || true
+fi
