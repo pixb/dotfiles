@@ -118,6 +118,9 @@ step4_stow_config() {
     stow -t ~ river
     stow -t ~ kanshi
     stow -t ~/.local .local
+
+    # pre-generate brightness cache for damblocks
+    command -v bright >/dev/null 2>&1 && bright --no-fifo 2>/dev/null
   fi
 }
 

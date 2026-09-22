@@ -140,13 +140,44 @@ cd dotfiles
 bash scripts/arch_install_user.sh
 ```
 
-## Install scripts
+### 2.5. Install UI
 
-### scripts/arch_install_init.sh
+```bash
+bash scripts/install_ui.sh
+```
 
-pacstrap install to /mnt.
+### 2.6. Install Nerd Font
 
-## `kvm_install.sh`
+```bash
+bash scripts/install_nerd_fonts.sh
+```
 
-安装`kvm`虚拟机脚本。
-参考`kvm`笔记。
+### 2.7. Install River KWM
+
+```bash
+bash scripts/install_river.sh
+```
+
+### 2.8. Install Greetd
+
+```bash
+bash scripts/install_greetd.sh
+```
+
+### 2.9. Install Mihomo
+
+```bash
+bash scripts/install_mioho.sh
+```
+
+### 2.10. Install Nvidia Driver
+
+```bash
+bash scripts/install_nvidia_hybrid.sh
+```
+
+### 2.11. Install Steam
+
+```bash
+bash scripts/install_steam.sh
+```
