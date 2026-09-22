@@ -184,7 +184,7 @@ cd "${SCRIPT_DIR}" || exit
 pacman_install neovim openssh tk fzf the_silver_searcher
 pacman_install tmux go ripgrep lazygit imagemagick highlight
 pacman_install p7zip rsync cifs-utils smbclient stow
-pacman_install brightnessctl wob
+pacman_install brightnessctl wob pacman-contrib
 
 # ssh service start
 if command -v ssh >/dev/null 2>&1; then
@@ -300,6 +300,21 @@ systemctl_start docker
 pacman_install cronie
 systemctl_enable cronie
 systemctl_start cronie
+
+# === checkupdates-cron (pacman update count for damblocks) ===
+# scripts managed by stow via install_river.sh (stow -t ~/.local .local)
+
+# /etc/cron.d/checkupdates
+cat <<'CRON' | sudo tee /etc/cron.d/checkupdates > /dev/null
+@reboot $HOME/.local/bin/checkupdates-cron --now
+*/15 * * * * $HOME/.local/bin/checkupdates-cron
+CRON
+sudo chmod 644 /etc/cron.d/checkupdates
+
+# initial cache (run after stow creates symlinks)
+if [ -x "${HOME}/.local/bin/checkupdates-cron" ]; then
+    "${HOME}/.local/bin/checkupdates-cron" --now || true
+fi
 
 pacman_install pipewire
 pacman_install pipewire-pulse
