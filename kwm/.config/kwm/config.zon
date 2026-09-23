@@ -48,7 +48,7 @@
         // .top
         // .bottom
         .position = .top,
-        .font = "NotoSansMNerdFontPropo:size=16",
+        .font = "NotoSansMNerdFontPropo:size=14",
 
         .scheme = .{
             .normal = .{
