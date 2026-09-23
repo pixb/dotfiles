@@ -34,7 +34,7 @@ stow -t ~ waybar   # waybar 状态栏配置 (如使用 sway)
 ```shell
 # .local/bin/ 下的脚本会通过 stow 自动部署到 ~/.local/bin/
 # 包含: foots, damblocks, damblocks-mpdd, audio, bright, exiland 等
-stow -t ~ .local
+stow -t ~/.local .local
 ```
 
 ## 脚本说明

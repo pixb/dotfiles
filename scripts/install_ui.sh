@@ -70,6 +70,7 @@ trizen_install fcitx5-skin-fluentdark-git
 trizen_install adwaita-qt5
 trizen_install adwaita-qt6
 pacman_install grim
+pacman_install slurp
 pacman_install code
 trizen_install flameshot-git
 
@@ -95,6 +96,8 @@ trizen_install abduco
 trizen_install dvtm
 trizen_install waylock
 trizen_install wlrctl
+pacman_install firejail
+trizen_install wshowkeys-mao-git
 
 # qutebrowser dependencies
 pacman_install dictd
