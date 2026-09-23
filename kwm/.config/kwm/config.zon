@@ -28,7 +28,7 @@
         .{ "sh", "-c", "${HOME}/.local/bin/foots" },
         // .{ "sh", "-c", "${HOME}/.local/bin/lucia -d" },
         .{ "sh", "-c", "${HOME}/.local/bin/wobd -c ${HOME}/.config/wob/wob-offset.ini" },
-        // .{ "sh", "-c", "${HOME}/.local/bin/mbs-cron" },
+        .{ "sh", "-c", "${HOME}/.local/bin/mbs-cron" },
         .{ "sh", "-c", "${HOME}/.local/bin/damblocks --fifo" },
         .{ "sh", "-c", "${HOME}/.local/bin/damblocks-mpdd" },
     },
