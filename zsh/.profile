@@ -26,7 +26,8 @@ if [ -d "$HOME/.local/bin" ]; then
 fi
 
 # export BROWSER=/usr/bin/chromium
-export BROWSER=/usr/bin/google-chrome-stable
+# export BROWSER=/usr/bin/google-chrome-stable
+export BROWSER=/usr/bin/qutebrowser
 export EDITOR=/usr/bin/nvim
 export SYSTEMD_EDITOR=vim
 
