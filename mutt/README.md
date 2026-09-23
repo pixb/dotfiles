@@ -10,6 +10,9 @@ This package provides neomutt configuration with OAuth2 authentication for Gmail
 
 ```sh
 sudo pacman -S neomutt isync
+
+# XOAUTH2 SASL 插件（AUR）
+trizen -S cyrus-sasl-xoauth2-git
 ```
 
 ### 2. Deploy Configuration
@@ -146,7 +149,33 @@ mutt/
 
 ### "Permission denied" for GPG
 - Ensure GPG agent is running: `gpg-connect-agent /bye`
-- Verify key ID matches: `gpg --list-keys --keyid-format long`
+- Configure loopback pinentry: `echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf`
+- Set `export GPG_TTY=$(tty)`
+
+### mbsync SSL error (proxy/TUN environment)
+- **现象**: `wrong version number` 或 `UNEXPECTED_EOF_WHILE_READING`
+- **原因**: mihomo TUN fake-ip 拦截 IMAP 993；`TLSType IMAPS` 与 Tunnel 叠加双重 TLS
+- **修复**: isyncrc 中设置 `TLSType None` + Tunnel 走 SOCKS5 代理
+```sh
+TLSType None
+Tunnel "openssl s_client -quiet -ign_eof -connect imap.gmail.com:993 -servername imap.gmail.com -proxy 127.0.0.1:7890"
+```
+
+### "selected SASL mechanism(s) not available: XOAUTH2"
+- **原因**: 缺少 XOAUTH2 SASL 插件
+- **修复**: `trizen -S cyrus-sasl-xoauth2-git`
+- 验证: `ls /usr/lib/sasl2/libxoauth2.so`
+
+### PassCmd -t 标志误用
+- **现象**: PassCmd 触发 IMAP 测试连接失败
+- **原因**: `-t` 在 mutt_oauth2.py 中是 `--test` 标志，不是 token 文件路径
+- **修复**: 移除 `-t`，token 文件作为位置参数
+```sh
+# 正确
+PassCmd "... mutt_oauth2.py --decryption-pipe '...' ~/.cache/mutt/oauth-gmail"
+# 错误（-t 会触发 IMAP 测试）
+PassCmd "... mutt_oauth2.py --decryption-pipe '...' -t ~/.cache/mutt/oauth-gmail"
+```
 
 ### mbsync fails
 - Check `~/.config/isyncrc` has correct paths

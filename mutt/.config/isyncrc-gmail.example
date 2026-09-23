@@ -6,10 +6,11 @@
 IMAPAccount account-gmail
 Host imap.gmail.com
 Port 993
-User YOUR_EMAIL@gmail.com
-PassCmd "/usr/share/neomutt/oauth2/mutt_oauth2.py --decryption-pipe 'gpg --decrypt --pinentry-mode loopback' -t ~/.cache/mutt/oauth-gmail"
-TLSType IMAPS
+User your-email@gmail.com
+PassCmd "/usr/share/neomutt/oauth2/mutt_oauth2.py --decryption-pipe 'gpg --decrypt --pinentry-mode loopback' ~/.cache/mutt/oauth-gmail"
+TLSType None
 AuthMechs XOAUTH2
+Tunnel "openssl s_client -quiet -ign_eof -connect imap.gmail.com:993 -servername imap.gmail.com -proxy 127.0.0.1:7890"
 
 IMAPStore account-gmail-remote
 Account account-gmail

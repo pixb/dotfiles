@@ -319,6 +319,10 @@ fi
 
 # === mutt/neomutt email client ===
 # mutt config managed by stow via install_ui.sh (stow -t ~ mutt)
+# XOAUTH2 SASL plugin for Gmail OAuth2 (AUR)
+if ! pacman -Qi cyrus-sasl-xoauth2-git >/dev/null 2>&1; then
+    "$AUR_HELPER" -S cyrus-sasl-xoauth2-git --noconfirm --needed || true
+fi
 # create maildir structure for accounts
 mkdir -p ~/doc/mail/account-{gmail,private,public,unixchad}
 # initial isyncrc if not exists
