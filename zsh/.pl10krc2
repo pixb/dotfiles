@@ -33,10 +33,10 @@
   local grey='244'
   local red='#FF5C57'
   local green='#00cc00' # 40
-  local yellow='#F3F99D'
+  local yellow='#FEB900' #F3F99D
   local blue='#57C7FF'
   local magenta='#FF6AC1'
-  local cyan='#9AEDFE'
+  local cyan='#109D00' #9AEDFE
   local white='#F1F1F0'
 
   # The list of segments shown on the left. Fill it with the most important segments.
@@ -256,7 +256,7 @@
       # Styling for up-to-date Git status.
       local       meta='%f'     # default foreground
       local      clean='%212F'  # magenta foreground
-      local   modified='%229F'  # yellow foreground
+      local   modified='%48F'  # yellow foreground ori 229
       local  untracked='%45F'   # blue foreground
       local conflicted='%203F'  # red foreground
     else
