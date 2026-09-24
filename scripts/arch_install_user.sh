@@ -130,6 +130,7 @@ stow -t ~ zsh
 stow -t ~ git
 stow -t ~ shell
 stow -t ~ go
+stow -t ~ gnupg
 cd ${SCRIPT_DIR}
 
 if [ -e $HOME/.sdkman/bin/sdkman-init.sh ]; then

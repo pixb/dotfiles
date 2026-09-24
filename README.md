@@ -27,6 +27,8 @@ stow -t ~ foot     # foot 终端配置
 stow -t ~ dunst    # dunst 通知配置
 stow -t ~ fcitx5   # 输入法配置
 stow -t ~ waybar   # waybar 状态栏配置 (如使用 sway)
+stow -t ~ shell    # .bashrc 等通用 shell 配置
+stow -t ~ gnupg    # ~/.gnupg/gpg-agent.conf (TTL / pinentry)
 ```
 
 ### 4. 部署脚本
