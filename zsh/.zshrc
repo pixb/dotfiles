@@ -1,6 +1,8 @@
 # Load Zsh profile
 source ~/.zprofile
 
+export GPG_TTY=$(tty) # TUI pinentry, need be set for each pts
+
 # 设置 vi 模式
 set -o vi
 
