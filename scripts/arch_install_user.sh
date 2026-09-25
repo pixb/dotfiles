@@ -238,6 +238,13 @@ cd ${DOTFILES_PATH}
 stow -t ~ ranger
 cd ${SCRIPT_DIR}
 
+# === lf (file manager; scope previewer deployed with the .local package) ===
+pacman_install lf bat chafa catimg w3m ffmpegthumbnailer mediainfo perl-image-exiftool python-mutagen
+
+cd ${DOTFILES_PATH}
+stow -t ~ lf
+cd ${SCRIPT_DIR}
+
 aur_install fastfetch
 pacman_install gdb gcc cmake meson htop btop duf usbutils rust
 

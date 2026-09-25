@@ -30,6 +30,7 @@ stow -t ~ waybar   # waybar 状态栏配置 (如使用 sway)
 stow -t ~ shell    # .bashrc 等通用 shell 配置
 stow -t ~ gnupg    # ~/.gnupg/gpg-agent.conf (TTL / pinentry)
 stow -t ~ newsboat # RSS 阅读器配置
+stow -t ~ lf       # lf 文件管理器配置
 ```
 
 ### 4. 部署脚本
@@ -51,6 +52,8 @@ stow -t ~/.local .local
 | `news` | 打开 newsboat，退出后刷新未读数 |
 | `newsboat-update-cron` | 定时抓取 RSS feeds 并刷新未读数 |
 | `newsboat-num-cron` | RSS 未读数缓存到 `~/.cache/newsboat.num` |
+| `scope` | lf/fzf 通用文件预览器 |
+| `lf-rearrange` | lf 打开文件时保持文件列表排序 |
 | `audio` | 音量控制 |
 | `bright` | 亮度控制 |
 | `exiland` | 退出 river/sway |
