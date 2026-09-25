@@ -172,5 +172,5 @@ zinit snippet OMZ::plugins/sudo/sudo.plugin.zsh
 [[ -s "/home/pix/.gvm/scripts/gvm" ]] && source "/home/pix/.gvm/scripts/gvm"
 
 if [ -e ${HOME}/dev/env ]; then
-  source ${HOME}/dev/env/agentmemory.env
+  source ${HOME}/dev/env/env/agentmemory.env
 fi

@@ -119,6 +119,8 @@ fi
 npm config set prefix ~/.npm-global
 
 pacman_install stow
+# transparent encryption for private/secrets git repo (NAS Gitea)
+pacman_install git-crypt
 
 # === dotfiles ===
 DOTFILES_PATH=${HOME}/dotfiles
@@ -241,22 +243,22 @@ pacman_install gdb gcc cmake meson htop btop duf usbutils rust
 
 # === mechrevo laptop drivers (Tongfang EC fan/keyboard control) ===
 if grep -qi 'MECHREVO' /sys/devices/virtual/dmi/id/sys_vendor 2>/dev/null; then
-    pacman_install dkms linux-headers
-    aur_install mechrevo-drivers-dkms
+  pacman_install dkms linux-headers
+  aur_install mechrevo-drivers-dkms
 
-    # compile and install EC fan reader
-    if [ -f "${SCRIPT_DIR}/mechrevo-fan.c" ]; then
-        sudo gcc -O2 -s -o /usr/local/bin/mechrevo-fan "${SCRIPT_DIR}/mechrevo-fan.c"
-        sudo chmod 755 /usr/local/bin/mechrevo-fan
-    fi
+  # compile and install EC fan reader
+  if [ -f "${SCRIPT_DIR}/mechrevo-fan.c" ]; then
+    sudo gcc -O2 -s -o /usr/local/bin/mechrevo-fan "${SCRIPT_DIR}/mechrevo-fan.c"
+    sudo chmod 755 /usr/local/bin/mechrevo-fan
+  fi
 
-    # install fanmode-cron and crontab entry
-    if [ -f "${SCRIPT_DIR}/fanmode-cron" ]; then
-        sudo cp "${SCRIPT_DIR}/fanmode-cron" /usr/local/bin/fanmode-cron
-        sudo chmod 755 /usr/local/bin/fanmode-cron
-        echo '*/5 * * * * root /usr/local/bin/fanmode-cron' | sudo tee /etc/cron.d/fanmode > /dev/null
-        sudo chmod 644 /etc/cron.d/fanmode
-    fi
+  # install fanmode-cron and crontab entry
+  if [ -f "${SCRIPT_DIR}/fanmode-cron" ]; then
+    sudo cp "${SCRIPT_DIR}/fanmode-cron" /usr/local/bin/fanmode-cron
+    sudo chmod 755 /usr/local/bin/fanmode-cron
+    echo '*/5 * * * * root /usr/local/bin/fanmode-cron' | sudo tee /etc/cron.d/fanmode >/dev/null
+    sudo chmod 644 /etc/cron.d/fanmode
+  fi
 fi
 
 if [ ! -d $HOME/.tmux ]; then
@@ -307,7 +309,7 @@ systemctl_start cronie
 # scripts managed by stow via install_river.sh (stow -t ~/.local .local)
 
 # /etc/cron.d/checkupdates
-cat <<'CRON' | sudo tee /etc/cron.d/checkupdates > /dev/null
+cat <<'CRON' | sudo tee /etc/cron.d/checkupdates >/dev/null
 @reboot $HOME/.local/bin/checkupdates-cron --now
 */15 * * * * $HOME/.local/bin/checkupdates-cron
 CRON
@@ -315,26 +317,26 @@ sudo chmod 644 /etc/cron.d/checkupdates
 
 # initial cache (run after stow creates symlinks)
 if [ -x "${HOME}/.local/bin/checkupdates-cron" ]; then
-    "${HOME}/.local/bin/checkupdates-cron" --now || true
+  "${HOME}/.local/bin/checkupdates-cron" --now || true
 fi
 
 # === mutt/neomutt email client ===
 # mutt config managed by stow via install_ui.sh (stow -t ~ mutt)
 # XOAUTH2 SASL plugin for Gmail OAuth2 (AUR)
 if ! pacman -Qi cyrus-sasl-xoauth2-git >/dev/null 2>&1; then
-    "$AUR_HELPER" -S cyrus-sasl-xoauth2-git --noconfirm --needed || true
+  "$AUR_HELPER" -S cyrus-sasl-xoauth2-git --noconfirm --needed || true
 fi
 # create maildir structure for accounts
 mkdir -p ~/doc/mail/account-{gmail,private,public,unixchad}
 # initial isyncrc if not exists
 if [ ! -f "${HOME}/.config/isyncrc" ] && [ -f "${DOTFILES_PATH}/mutt/.config/isyncrc.example" ]; then
-    cp "${DOTFILES_PATH}/mutt/.config/isyncrc.example" "${HOME}/.config/isyncrc"
-    echo -e "${COLOR_YELLOW}Please edit ~/.config/isyncrc with your email accounts${COLOR_NC}"
+  cp "${DOTFILES_PATH}/mutt/.config/isyncrc.example" "${HOME}/.config/isyncrc"
+  echo -e "${COLOR_YELLOW}Please edit ~/.config/isyncrc with your email accounts${COLOR_NC}"
 fi
 # initial Gmail account config template
 if [ ! -f "${HOME}/.config/mutt/account-gmail.muttrc" ] && [ -f "${DOTFILES_PATH}/mutt/.config/mutt/account-gmail.muttrc.example" ]; then
-    cp "${DOTFILES_PATH}/mutt/.config/mutt/account-gmail.muttrc.example" "${HOME}/.config/mutt/account-gmail.muttrc"
-    echo -e "${COLOR_YELLOW}Please edit ~/.config/mutt/account-gmail.muttrc with your Gmail address${COLOR_NC}"
+  cp "${DOTFILES_PATH}/mutt/.config/mutt/account-gmail.muttrc.example" "${HOME}/.config/mutt/account-gmail.muttrc"
+  echo -e "${COLOR_YELLOW}Please edit ~/.config/mutt/account-gmail.muttrc with your Gmail address${COLOR_NC}"
 fi
 
 pacman_install pipewire
@@ -380,3 +382,5 @@ npm install -g --allow-scripts=opencode-ai opencode-ai
 
 # === pi agent ===
 npm install -g --ignore-scripts @earendil-works/pi-coding-agent
+
+pacman_install inetutils
