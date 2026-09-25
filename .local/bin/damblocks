@@ -345,11 +345,12 @@ update_mpd() {
 # cache file generated/updated by `${HOME}/.local/bin/wttr --cron`
 update_wttr() {
     local WTTR_CACHE="$HOME/.cache/wttr"
+    local icon=""
+    local result=""
+    [ ! -f "$WTTR_CACHE" ] && { wttr="󰨹"; return; }
     local update_time="$(stat -L -c "%Y" "$WTTR_CACHE")"
     local current_time="$(date +%s)"
     local UPDATE_FREQUENCY=5400 # 1.5H
-    local icon=""
-    local result=""
     [ $((current_time - update_time)) -gt "$UPDATE_FREQUENCY" ] && result=""
     result="$(sed 's/ //g; s/\+//' $WTTR_CACHE)"
     [ ! -f "$WTTR_CACHE" ] || [ -z "$result" ] && icon="󰨹"

@@ -46,6 +46,7 @@ stow -t ~/.local .local
 | `foots` | 启动 foot 终端服务 |
 | `damblocks` | 状态栏生成器 |
 | `damblocks-mpdd` | mpd 状态更新 |
+| `wttr` | 天气查询，缓存到 `~/.cache/wttr` 供状态栏显示 |
 | `audio` | 音量控制 |
 | `bright` | 亮度控制 |
 | `exiland` | 退出 river/sway |

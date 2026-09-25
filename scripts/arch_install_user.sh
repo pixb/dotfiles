@@ -231,7 +231,7 @@ else
 fi
 
 # === ranger ===
-pip3 install setuptools
+pip3 install setuptools || true
 aur_install ranger-git
 
 cd ${DOTFILES_PATH}
@@ -269,7 +269,7 @@ pacman_install bc
 
 if command -v pkgfile &>/dev/null; then
   echo -e "${COLOR_GREEN}pkgfile is installed${COLOR_NC}"
-  sudo pkgfile --update
+  sudo pkgfile --update || true
 else
   echo -e "${COLOR_YELLOW}pkgfile is not install${COLOR_NC}"
   sudo pacman -S pkgfile --noconfirm
@@ -309,15 +309,51 @@ systemctl_start cronie
 # scripts managed by stow via install_river.sh (stow -t ~/.local .local)
 
 # /etc/cron.d/checkupdates
-cat <<'CRON' | sudo tee /etc/cron.d/checkupdates >/dev/null
-@reboot $HOME/.local/bin/checkupdates-cron --now
-*/15 * * * * $HOME/.local/bin/checkupdates-cron
+# NOTE: cron.d requires a user field and does not expand $HOME at run time,
+# so both are expanded here at install time (unquoted heredoc).
+# Only rewrite when the content actually differs, so local edits survive re-runs.
+CRON_CHECKUPDATES="$(cat <<CRON
+@reboot $(id -un) ${HOME}/.local/bin/checkupdates-cron --now
+*/15 * * * * $(id -un) ${HOME}/.local/bin/checkupdates-cron
 CRON
-sudo chmod 644 /etc/cron.d/checkupdates
+)"
+if [ "$(cat /etc/cron.d/checkupdates 2>/dev/null || true)" != "$CRON_CHECKUPDATES" ]; then
+  printf '%s\n' "$CRON_CHECKUPDATES" | sudo tee /etc/cron.d/checkupdates >/dev/null
+  sudo chmod 644 /etc/cron.d/checkupdates
+fi
 
 # initial cache (run after stow creates symlinks)
 if [ -x "${HOME}/.local/bin/checkupdates-cron" ]; then
   "${HOME}/.local/bin/checkupdates-cron" --now || true
+fi
+
+# === wttr (weather report for damblocks/i3status) ===
+# city file consumed by .local/bin/wttr
+CITY_FILE="${HOME}/.cache/city"
+if [ ! -f "$CITY_FILE" ] || [ -z "$(cat "$CITY_FILE" 2>/dev/null)" ]; then
+  if [ -t 0 ]; then
+    read -rp "Enter your city (for wttr script): " REPLY || REPLY=""
+    [ -n "$REPLY" ] && printf '%s\n' "$REPLY" > "$CITY_FILE"
+  else
+    echo -e "${COLOR_YELLOW}WARNING: $CITY_FILE is not set (non-interactive); run 'wttr -e' to set your city, otherwise /etc/cron.d/wttr will keep failing${COLOR_NC}" >&2
+  fi
+fi
+
+# /etc/cron.d/wttr (user field + $HOME expanded at install time,
+# rewritten only when the content differs)
+CRON_WTTR="$(cat <<CRON
+@reboot $(id -un) ${HOME}/.local/bin/wttr --update
+*/5 * * * * $(id -un) ${HOME}/.local/bin/wttr --cron
+CRON
+)"
+if [ "$(cat /etc/cron.d/wttr 2>/dev/null || true)" != "$CRON_WTTR" ]; then
+  printf '%s\n' "$CRON_WTTR" | sudo tee /etc/cron.d/wttr >/dev/null
+  sudo chmod 644 /etc/cron.d/wttr
+fi
+
+# initial weather cache (run after stow creates symlinks)
+if [ -x "${HOME}/.local/bin/wttr" ] && [ -s "${CITY_FILE}" ]; then
+  "${HOME}/.local/bin/wttr" --update || true
 fi
 
 # === mutt/neomutt email client ===
@@ -378,9 +414,9 @@ systemctl_enable nmb
 systemctl_start nmb
 
 aur_install herdr-bin
-npm install -g --allow-scripts=opencode-ai opencode-ai
+npm install -g --allow-scripts=opencode-ai opencode-ai || true
 
 # === pi agent ===
-npm install -g --ignore-scripts @earendil-works/pi-coding-agent
+npm install -g --ignore-scripts @earendil-works/pi-coding-agent || true
 
 pacman_install inetutils
