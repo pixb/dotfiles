@@ -6,12 +6,12 @@
 [colors-light]
 # Gruvbox 
 alpha=1
-background=fbf1c3  #fbf1c3
+background=fbf1c7  #fbf1c7
 foreground=3c3836  #3c3836  
 flash=7f7fee #7f7fee
 flash-alpha=0.8
 
-# 基础16色（Gruvbox Dark调色板）
+# 基础16色（Gruvbox Light调色板）
 # black
 regular0=282828 #282828
 # red
