@@ -6,4 +6,4 @@ MBSYNC_CACHE="${XDG_RUNTIME_DIR}/mbsync-cron"
 
 mbsync -aq \
     && touch "$MBSYNC_CACHE" \
-    && kill -41 $(cat ${XDG_RUNTIME_DIR}/damblocks.pid);
+    && kill -41 $(pgrep -x damblocks -u "$UID");
