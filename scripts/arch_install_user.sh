@@ -356,6 +356,50 @@ if [ -x "${HOME}/.local/bin/wttr" ] && [ -s "${CITY_FILE}" ]; then
   "${HOME}/.local/bin/wttr" --update || true
 fi
 
+# === newsboat (RSS reader; unread count for damblocks) ===
+# config managed by stow via install_ui.sh (stow -t ~ newsboat)
+pacman_install newsboat
+
+# initial local config from examples (urls/proxy.conf are local, gitignored)
+NEWSBOAT_DIR="${HOME}/.config/newsboat"
+if [ ! -d "$NEWSBOAT_DIR" ]; then
+  mkdir -p "$NEWSBOAT_DIR"
+fi
+if [ ! -f "${NEWSBOAT_DIR}/proxy.conf" ] && [ -f "${DOTFILES_PATH}/newsboat/.config/newsboat/proxy.conf.example" ]; then
+  cp "${DOTFILES_PATH}/newsboat/.config/newsboat/proxy.conf.example" "${NEWSBOAT_DIR}/proxy.conf"
+fi
+if [ ! -f "${NEWSBOAT_DIR}/urls" ] && [ -f "${DOTFILES_PATH}/newsboat/.config/newsboat/urls.example" ]; then
+  cp "${DOTFILES_PATH}/newsboat/.config/newsboat/urls.example" "${NEWSBOAT_DIR}/urls"
+fi
+
+# initial unread cache (epoch mtime so the first cron run triggers an update)
+NEWS_NUM="${HOME}/.cache/newsboat.num"
+if [ ! -f "$NEWS_NUM" ]; then
+  printf '0' > "$NEWS_NUM"
+  touch --date='1970-01-01 00:00:00' "$NEWS_NUM"
+fi
+
+# /etc/cron.d/newsboat (user field + $HOME expanded at install time,
+# rewritten only when the content differs; update-cron must run before
+# num-cron: both throttle on the same ~/.cache/newsboat.num mtime)
+CRON_NEWSBOAT="$(cat <<CRON
+@reboot $(id -un) ${HOME}/.local/bin/newsboat-update-cron
+*/15 * * * * $(id -un) ${HOME}/.local/bin/newsboat-update-cron
+# status bar newsboat unread count
+@reboot $(id -un) ${HOME}/.local/bin/newsboat-num-cron
+*/15 * * * * $(id -un) ${HOME}/.local/bin/newsboat-num-cron
+CRON
+)"
+if [ "$(cat /etc/cron.d/newsboat 2>/dev/null || true)" != "$CRON_NEWSBOAT" ]; then
+  printf '%s\n' "$CRON_NEWSBOAT" | sudo tee /etc/cron.d/newsboat >/dev/null
+  sudo chmod 644 /etc/cron.d/newsboat
+fi
+
+# initial feeds fetch + unread count (run after stow creates symlinks)
+if [ -x "${HOME}/.local/bin/newsboat-update-cron" ]; then
+  "${HOME}/.local/bin/newsboat-update-cron" --now || true
+fi
+
 # === mutt/neomutt email client ===
 # mutt config managed by stow via install_ui.sh (stow -t ~ mutt)
 # XOAUTH2 SASL plugin for Gmail OAuth2 (AUR)

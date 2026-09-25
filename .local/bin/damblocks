@@ -311,6 +311,7 @@ update_mutt() {
 # RSS feeds updated by `${HOME}/.local/bin/newsboat-update-cron`
 update_newsboat() {
     local NEWS_CACHE="$HOME/.cache/newsboat.num"
+    [ ! -f "$NEWS_CACHE" ] && { newsboat="󰍡0"; return; }
     local update_time=$(stat -L -c "%Y" "$NEWS_CACHE")
     local current_time=$(date +%s)
     local UPDATE_FREQUENCY=16200 # 4.5H

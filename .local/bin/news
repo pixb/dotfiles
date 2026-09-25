@@ -1,0 +1,14 @@
+#!/usr/bin/sh
+# @author nate zhou
+# @since 2025,2026
+# update newsboat unread count for my status bar
+
+update() {
+    $HOME/.local/bin/newsboat-num-cron --now >/dev/null
+    kill -42 $(pgrep -x damblocks -u "$UID") 2>/dev/null;
+}
+
+# update count on exit, interrupted or terminated
+trap update EXIT INT TERM HUP QUIT
+
+command newsboat -q

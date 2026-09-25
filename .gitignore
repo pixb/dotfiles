@@ -30,3 +30,7 @@ go/.config/go/telemetry/
 # mpd music library (only track .mpdignore)
 mus/*
 !mus/.mpdignore
+
+# newsboat local config (copied from *.example by arch_install_user.sh)
+newsboat/.config/newsboat/urls
+newsboat/.config/newsboat/proxy.conf
