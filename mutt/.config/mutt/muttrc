@@ -40,14 +40,18 @@ auto_view text/html
 macro index,pager S "<sync-mailbox><enter-command>unset wait_key<enter><shell-escape>$HOME/.local/bin/mbs<enter><enter-command>set wait_key<enter>" "Sync Mailbox"
 
 # accounts
-source "~/.config/mutt/account-private.muttrc"
-source "~/.config/mutt/account-public.muttrc"
-source "~/.config/mutt/account-unixchad.muttrc"
+# 本机只接入 gmail（,1 默认激活）；private/public/unixchad 为预留槽位：
+# 建好 account-xxx.muttrc（照 README "Adding More Accounts"）后取消对应注释
+source "~/.config/mutt/account-gmail.muttrc"
+# source "~/.config/mutt/account-private.muttrc"
+# source "~/.config/mutt/account-public.muttrc"
+# source "~/.config/mutt/account-unixchad.muttrc"
 
 ## switch accounts (,+n)
-folder-hook 'account-private' 'source ~/.config/mutt/account-private.muttrc'
-macro index ,1 "<enter-command>unmailboxes *<enter><enter-command>source ~/.config/mutt/account-private.muttrc<enter><sync-mailbox><change-folder>!<enter>"
-folder-hook 'account-public' 'source ~/.config/mutt/account-public.muttrc'
-macro index ,2 "<enter-command>unmailboxes *<enter><enter-command>source ~/.config/mutt/account-public.muttrc<enter><sync-mailbox><change-folder>!<enter>"
-folder-hook 'account-unixchad' 'source ~/.config/mutt/account-unixchad.muttrc'
-macro index ,3 "<enter-command>unmailboxes *<enter><enter-command>source ~/.config/mutt/account-unixchad.muttrc<enter><sync-mailbox><change-folder>!<enter>"
+folder-hook 'account-gmail' 'source ~/.config/mutt/account-gmail.muttrc'
+macro index ,1 "<enter-command>unmailboxes *<enter><enter-command>source ~/.config/mutt/account-gmail.muttrc<enter><sync-mailbox><change-folder>!<enter>" "Switch to Gmail"
+# 预留槽位（接入后取消注释）：
+# folder-hook 'account-public' 'source ~/.config/mutt/account-public.muttrc'
+# macro index ,2 "<enter-command>unmailboxes *<enter><enter-command>source ~/.config/mutt/account-public.muttrc<enter><sync-mailbox><change-folder>!<enter>" "Switch to Public"
+# folder-hook 'account-unixchad' 'source ~/.config/mutt/account-unixchad.muttrc'
+# macro index ,3 "<enter-command>unmailboxes *<enter><enter-command>source ~/.config/mutt/account-unixchad.muttrc<enter><sync-mailbox><change-folder>!<enter>" "Switch to unixchad"
