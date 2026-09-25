@@ -43,14 +43,14 @@ parseBrightness() {
     grep 'Current brightness' \
             | tr '()' ' ' | cut -d' ' -f5 | sed 's/%//' \
             | tee "$FIFO" "$BRIGHTNESS" \
-        && kill -38 "$(cat $DAMBLOCKS)";
+        && kill -38 $(pgrep -x damblocks -u "$UID");
 }
 
 # don't direct to FIFO if brightness change is triggered by an idle manager.
 parseBrightnessIdle() {
     grep 'Current brightness' \
             | tr '()' ' ' | cut -d' ' -f5 | sed 's/%//' > "$BRIGHTNESS" \
-        && kill -38 "$(cat $DAMBLOCKS)";
+        && kill -38 $(pgrep -x damblocks -u "$UID");
 }
 
 changeBrightness() {

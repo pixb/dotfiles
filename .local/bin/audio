@@ -42,12 +42,12 @@ _EOF_
 
 blocks_reload() {
     parseVolume
-    [ "$1" = "sink"  ] && kill -36 "$(cat $DAMBLOCKS)";
-    [ "$1" = "source" ] && kill -37 "$(cat $DAMBLOCKS)";
+    [ "$1" = "sink"  ] && kill -36 $(pgrep -x damblocks -u "$UID");
+    [ "$1" = "source" ] && kill -37 $(pgrep -x damblocks -u "$UID");
     # ../../etc/udev/rules.d/99-damblocks-bluetooth.rules
     [ "$1" = "all" ] \
-        && kill -36 "$(cat $DAMBLOCKS)" \
-        && kill -37 "$(cat $DAMBLOCKS)";
+        && kill -36 $(pgrep -x damblocks -u "$UID") \
+        && kill -37 $(pgrep -x damblocks -u "$UID");
 }
 
 get_volume() {

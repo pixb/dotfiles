@@ -4,7 +4,7 @@
 # update neomutt unread count for my status bar
 
 update() {
-    kill -41 $(cat ${XDG_RUNTIME_DIR}/damblocks.pid);
+    kill -41 $(pgrep -x damblocks -u "$UID");
 }
 
 # update count on exit, interrupted or terminated

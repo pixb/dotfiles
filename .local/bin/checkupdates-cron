@@ -29,7 +29,7 @@ update_cache() {
 
     wc -w "$LOG_CACHE" | awk '{print $1}' > "$NUM_CACHE"
 
-    [ -f "$DAMBLOCKS" ] && kill -40 "$(cat $DAMBLOCKS)";
+    kill -40 $(pgrep -x damblocks -u "$UID") 2>/dev/null;
 }
 
 while [ -n "$1" ]; do

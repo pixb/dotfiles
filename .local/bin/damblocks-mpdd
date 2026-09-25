@@ -7,6 +7,6 @@ pkill -f 'mpc idle'
 
 while : ; do
     mpc idle >/dev/null \
-        && kill -45 "$(cat ${XDG_RUNTIME_DIR}/damblocks.pid)" \
+        && kill -45 $(pgrep -x damblocks -u "$UID") \
         || break
 done

@@ -22,4 +22,4 @@ duty=$($EC_FAN r 2>/dev/null)
 echo "$duty" > "$CACHE"
 
 # signal damblocks to refresh (RTMIN+13 = signal 47)
-[ -f "$DAMBLOCKS" ] && kill -47 "$(cat "$DAMBLOCKS")" 2>/dev/null
+[ -f "$DAMBLOCKS" ] && kill -47 $(pgrep -x damblocks -u "$FAN_UID") 2>/dev/null
