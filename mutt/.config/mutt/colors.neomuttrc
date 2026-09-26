@@ -3,64 +3,73 @@
 # @author nate zhou
 # @since 2025
 # Based on the Neonwolf Color Scheme for NeoMutt
+# Retuned for the dual foot themes: Gruvbox dark (primary) / Novel light.
+# Every pair below measures >= 3:1 (WCAG) on both palettes.
 
 # basic colors ---------------------------------------------------------
 
-color error         bold  red       color235   # message line error text
-color tilde               color81   default    # vi-like tildes marking blank lines
-color message             white     color14
-color markers       bold  green     color0     # wrapped-line /^\+/ markers
-color attachment    bold  yellow    default    # attachment headers
-color search              white     color14    # search patterns in pager
-color status              white     color14
-color indicator           white     color14    # selected email in index
-color tree          bold  color9    default    # arrow in threads (`-->')
+color error         bold  color0    color3    # message line error text (black on yellow)
+color tilde               color8    default   # vi-like tildes marking blank lines
+color message             color0    color14
+color markers       bold  green     color0    # wrapped-line /^\+/ markers
+color attachment    bold  color0    color3    # attachment headers (black on yellow)
+color search              color0    color14   # search patterns in pager
+color status              color0    color14
+color indicator           color0    color14   # selected email in index
+color tree          bold  color9    default   # arrow in threads (`-->')
 
-color index               green     default ~N # new
-color index               red       default ~D # delete
-color index               yellow    default ~F # delete
-color index               magenta   default ~T # delete
+color index               color12   default ~N # new
+color index               color9    default ~D # delete
+color index               color0    color3   ~F # flagged (black on yellow)
+color index               color5    default ~T # tagged
 
 color index_number        color8    default
-color index_author        color6    default
-color index_size          color7    default
-color index_subject       color6    default
+color index_author        color12   default
+color index_size          default   default
+color index_subject       color12   default
 
-color sidebar_new         green     default
-color sidebar_flagged     yellow    default
+# keep the whole ~F row black-on-yellow (fields would otherwise keep their
+# own fg on the yellow bg and drop below 3:1 in dark)
+color index_number        color0    color3   ~F
+color index_author        color0    color3   ~F
+color index_size          color0    color3   ~F
+color index_subject       color0    color3   ~F
+
+color sidebar_new         color12   default
+color sidebar_flagged     color0    color3
 
 # message headers ------------------------------------------------------
 
-color hdrdefault          white     default
-color header              white     default       "^(Date)"
-color header              white     color14      "^(Subject)"
+color hdrdefault          default   default
+color header              default   default     "^(Date)"
+color header              color0    color14     "^(Subject)"
 
 # body -----------------------------------------------------------------
 
 
-color body         brightyellow     default "^> \.*" # markdown quoted
-color body               yellow     default "^(\t| )*(-|\\*) \.*" # markdown list
+color body         color8        default "^> \.*" # markdown quoted
+color body         color8        default "^(\t| )*(-|\\*) \.*" # markdown list
 
-color quoted             white      default
-color quoted1            white      default
-color quoted2            white      default
-color quoted3            white      default
-color quoted4            white      default
-color signature          white      default     # everything below /^--\s*$/
+color quoted             default   default
+color quoted1            default   default
+color quoted2            default   default
+color quoted3            default   default
+color quoted4            default   default
+color signature          default   default     # everything below /^--\s*$/
 
-color bold          bold white      default
-color underline          yellow     default
-color normal             white      default
+color bold          bold default   default
+color underline          default   default
+color normal             default   default
 
-color body              yellow      default [\-\.+_a-zA-Z0-9]+@[\-\.a-zA-Z0-9]+ # email addr
-color body              green       default (https?|ftp)://[\-\.,/%~_:?&=\#a-zA-Z0-9@]+ # URL
+color body              color5    default [\-\.+_a-zA-Z0-9]+@[\-\.a-zA-Z0-9]+ # email addr
+color body              color12   default (https?|ftp)://[\-\.,/%~_:?&=\#a-zA-Z0-9@]+ # URL
 
 ## pgp
 
-color body               red        default    "(BAD signature)"
-color body          bold green      default    "(Good signature)"
-color body          bold green      default    "^gpg: Good signature .*"
-color body          bold color241   default    "^gpg: "
-color body          bold red        default    "^gpg: BAD signature from.*"
+color body               color9    default    "(BAD signature)"
+color body          bold color0    color2     "(Good signature)"
+color body          bold color0    color2     "^gpg: Good signature .*"
+color body          bold color8    default    "^gpg: "
+color body          bold color9    default    "^gpg: BAD signature from.*"
 mono  body          bold                        "^gpg: Good signature"
 mono  body          bold                        "^gpg: BAD signature from.*"
