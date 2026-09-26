@@ -290,15 +290,18 @@ update_mutt() {
     local current_time="$(date +%s)"
     local count=0
     local icon="󰇮"
-    # Loop through each mailbox directory
+    # Count unread (no 'S' in maildir flags) messages arrived within the
+    # last 7 days, in both new/ and cur/: a mutt session or an mbsync state
+    # rebuild moves new/ to cur/ and would otherwise zero the signal.
     for mailbox in "$MAIL_DIR"/*; do
         if [ -d "$mailbox" ]; then
             # Manually specify folders instead of using brace expansion
             for folder in "$mailbox/INBOX" "$mailbox/Junk"; do
-                if [ -d "$folder/new" ]; then
-                    # Count the number of files in the 'new' directory
-                    count=$(($count + $(find "$folder/new" -type f | wc -l)))
-                fi
+                for sub in cur new; do
+                    if [ -d "$folder/$sub" ]; then
+                        count=$(($count + $(find "$folder/$sub" -type f ! -name '*:2,*S*' -mtime -7 | wc -l)))
+                    fi
+                done
             done
         fi
     done
