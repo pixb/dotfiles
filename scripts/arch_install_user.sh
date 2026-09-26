@@ -319,7 +319,8 @@ systemctl_start cronie
 # NOTE: cron.d requires a user field and does not expand $HOME at run time,
 # so both are expanded here at install time (unquoted heredoc).
 # Only rewrite when the content actually differs, so local edits survive re-runs.
-CRON_CHECKUPDATES="$(cat <<CRON
+CRON_CHECKUPDATES="$(
+  cat <<CRON
 @reboot $(id -un) ${HOME}/.local/bin/checkupdates-cron --now
 */15 * * * * $(id -un) ${HOME}/.local/bin/checkupdates-cron
 CRON
@@ -340,7 +341,7 @@ CITY_FILE="${HOME}/.cache/city"
 if [ ! -f "$CITY_FILE" ] || [ -z "$(cat "$CITY_FILE" 2>/dev/null)" ]; then
   if [ -t 0 ]; then
     read -rp "Enter your city (for wttr script): " REPLY || REPLY=""
-    [ -n "$REPLY" ] && printf '%s\n' "$REPLY" > "$CITY_FILE"
+    [ -n "$REPLY" ] && printf '%s\n' "$REPLY" >"$CITY_FILE"
   else
     echo -e "${COLOR_YELLOW}WARNING: $CITY_FILE is not set (non-interactive); run 'wttr -e' to set your city, otherwise /etc/cron.d/wttr will keep failing${COLOR_NC}" >&2
   fi
@@ -348,7 +349,8 @@ fi
 
 # /etc/cron.d/wttr (user field + $HOME expanded at install time,
 # rewritten only when the content differs)
-CRON_WTTR="$(cat <<CRON
+CRON_WTTR="$(
+  cat <<CRON
 @reboot $(id -un) ${HOME}/.local/bin/wttr --update
 */5 * * * * $(id -un) ${HOME}/.local/bin/wttr --cron
 CRON
@@ -382,14 +384,15 @@ fi
 # initial unread cache (epoch mtime so the first cron run triggers an update)
 NEWS_NUM="${HOME}/.cache/newsboat.num"
 if [ ! -f "$NEWS_NUM" ]; then
-  printf '0' > "$NEWS_NUM"
+  printf '0' >"$NEWS_NUM"
   touch --date='1970-01-01 00:00:00' "$NEWS_NUM"
 fi
 
 # /etc/cron.d/newsboat (user field + $HOME expanded at install time,
 # rewritten only when the content differs; update-cron must run before
 # num-cron: both throttle on the same ~/.cache/newsboat.num mtime)
-CRON_NEWSBOAT="$(cat <<CRON
+CRON_NEWSBOAT="$(
+  cat <<CRON
 @reboot $(id -un) ${HOME}/.local/bin/newsboat-update-cron
 */15 * * * * $(id -un) ${HOME}/.local/bin/newsboat-update-cron
 # status bar newsboat unread count
@@ -471,3 +474,4 @@ npm install -g --allow-scripts=opencode-ai opencode-ai || true
 npm install -g --ignore-scripts @earendil-works/pi-coding-agent || true
 
 pacman_install inetutils
+pacman_install github-cli
