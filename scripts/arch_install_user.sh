@@ -417,7 +417,7 @@ if ! pacman -Qi cyrus-sasl-xoauth2-git >/dev/null 2>&1; then
   "$AUR_HELPER" -S cyrus-sasl-xoauth2-git --noconfirm --needed || true
 fi
 # create maildir structure for accounts
-mkdir -p ~/doc/mail/account-{gmail,private,public,unixchad}
+mkdir -p ~/Documents/mail/account-{gmail,private,public,unixchad}
 # initial isyncrc if not exists
 if [ ! -f "${HOME}/.config/isyncrc" ] && [ -f "${DOTFILES_PATH}/mutt/.config/isyncrc.example" ]; then
   cp "${DOTFILES_PATH}/mutt/.config/isyncrc.example" "${HOME}/.config/isyncrc"

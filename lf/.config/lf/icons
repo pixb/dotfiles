@@ -45,14 +45,14 @@ LICENSE.*   
 /var/tmp    󰪺
 
 ~           󰋜
-~/doc       󱧶
-~/doc/git/  
-~/doc/code/ 
-~/doc/note/ 󰠮
-~/mus       󱍙
-~/pic       󰉏
-~/vid       󱜗
-~/dls       󰉍
+~/Documents 󱧶
+~/Documents/git/ 
+~/Documents/code/
+~/Documents/note/󰠮
+~/Music      󱍙
+~/Pictures   󰉏
+~/Videos     󱜗
+~/Downloads 󰉍
 ~/smb       󰡰
 ~/mnt       󰋊
 ~/pkg       󱧼

@@ -5,8 +5,8 @@
 # @depends wmenu grim slurp wlr-rander maim(xorg) xrandr(xorg)
 
 
-[ -z "$GRIM_DEFAULT_DIR" ] && GRIM_DEFAULT_DIR="$HOME/tmp/screenshots"
-SCREENSHOT_HOME="${HOME}/tmp/screenshots"
+[ -z "$GRIM_DEFAULT_DIR" ] && GRIM_DEFAULT_DIR="$HOME/Pictures/Screenshots"
+SCREENSHOT_HOME="${HOME}/Pictures/Screenshots"
 [ -d "$SCREENSHOT_HOME" ] || mkdir -p $SCREENSHOT_HOME
 
 filename="${SCREENSHOT_HOME}/$(date +%Y-%m-%d_%H_%M_%S).png"

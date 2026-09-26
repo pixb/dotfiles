@@ -8,7 +8,7 @@
 # 2. Install an XOAUTH2 SASL plugin, e.g. `cyrus-sasl-xoauth2-git`
 #
 # 3. Create maildirs as they are defined by `Path`
-#    e.g. `mkdir -p ~/doc/mail/account-{private,public,unixchad}`
+#    e.g. `mkdir -p ~/Documents/mail/account-{private,public,unixchad}`
 #
 # 4. Avoid cronjob because of gpg-agent ENV issues instead, calling
 #    `~/.local/bin/mbs-cron` in an autostart script.
@@ -33,8 +33,8 @@ IMAPStore account-private-remote
 Account account-private
 
 MaildirStore account-private-local
-Path ~/doc/mail/account-private/
-Inbox ~/doc/mail/account-private/INBOX
+Path ~/Documents/mail/account-private/
+Inbox ~/Documents/mail/account-private/INBOX
 SubFolders Verbatim
 
 Channel account-private
@@ -61,8 +61,8 @@ IMAPStore account-public-remote
 Account account-public
 
 MaildirStore account-public-local
-Path ~/doc/mail/account-public/
-Inbox ~/doc/mail/account-public/INBOX
+Path ~/Documents/mail/account-public/
+Inbox ~/Documents/mail/account-public/INBOX
 SubFolders Verbatim
 
 Channel account-public
@@ -89,8 +89,8 @@ IMAPStore account-unixchad-remote
 Account account-unixchad
 
 MaildirStore account-unixchad-local
-Path ~/doc/mail/account-unixchad/
-Inbox ~/doc/mail/account-unixchad/INBOX
+Path ~/Documents/mail/account-unixchad/
+Inbox ~/Documents/mail/account-unixchad/INBOX
 SubFolders Verbatim
 
 Channel account-unixchad

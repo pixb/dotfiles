@@ -40,7 +40,7 @@ cp ~/.config/isyncrc-gmail.example ~/.config/isyncrc
 ### 5. Create Maildir
 
 ```sh
-mkdir -p ~/doc/mail/account-gmail
+mkdir -p ~/Documents/mail/account-gmail
 ```
 
 ### 6. Generate GPG Key (if not exists)
@@ -179,14 +179,14 @@ PassCmd "... mutt_oauth2.py --decryption-pipe '...' -t ~/.cache/mutt/oauth-gmail
 
 ### mbsync fails
 - Check `~/.config/isyncrc` has correct paths
-- Verify maildir exists: `ls ~/doc/mail/account-gmail/`
+- Verify maildir exists: `ls ~/Documents/mail/account-gmail/`
 - Test with: `mbsync -l` (list channels)
 
 ## Adding More Accounts
 
 1. Create `account-xxx.muttrc` in `~/.config/mutt/`
 2. Add channel to `~/.config/isyncrc`
-3. Create maildir: `mkdir -p ~/doc/mail/account-xxx`
+3. Create maildir: `mkdir -p ~/Documents/mail/account-xxx`
 4. For OAuth2: run `muttauth --provider {google,microsoft}`
 5. For password: `echo 'set my_pass = "pass"' | gpg -e > ~/.cache/mutt/account-xxx.gpg`
 
@@ -196,5 +196,5 @@ PassCmd "... mutt_oauth2.py --decryption-pipe '...' -t ~/.cache/mutt/oauth-gmail
 stow -D -t ~ mutt
 rm -rf ~/.config/mutt/account-*.muttrc
 rm -f ~/.config/isyncrc
-rm -rf ~/doc/mail/account-*
+rm -rf ~/Documents/mail/account-*
 ```

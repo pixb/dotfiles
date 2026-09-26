@@ -284,7 +284,7 @@ update_mutt() {
 
     [ -f "$MBSYNC_CACHE" ] || { mutt="󱏣"; return; }
 
-    local MAIL_DIR="$HOME/doc/mail"
+    local MAIL_DIR="$HOME/Documents/mail"
     local UPDATE_FREQUENCY=3600 # in seconds
     local update_time="$(stat -L -c "%Y" "$MBSYNC_CACHE")"
     local current_time="$(date +%s)"

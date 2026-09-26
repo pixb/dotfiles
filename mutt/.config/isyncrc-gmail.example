@@ -16,8 +16,8 @@ IMAPStore account-gmail-remote
 Account account-gmail
 
 MaildirStore account-gmail-local
-Path ~/doc/mail/account-gmail/
-Inbox ~/doc/mail/account-gmail/INBOX
+Path ~/Documents/mail/account-gmail/
+Inbox ~/Documents/mail/account-gmail/INBOX
 SubFolders Verbatim
 
 Channel account-gmail

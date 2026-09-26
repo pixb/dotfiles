@@ -8,7 +8,7 @@ include "~/.config/newsboat/proxy.conf"
 
 datetime-format "%Y-%m-%d"
 
-save-path ~/doc/newsboat
+save-path ~/Documents/newsboat
 
 browser "~/.local/bin/url-rifle %u"
 

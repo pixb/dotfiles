@@ -4,7 +4,7 @@
 # @since 2025
 # Copy to ~/.config/mutt/account-gmail.muttrc and edit
 
-set folder = "~/doc/mail/account-gmail"
+set folder = "~/Documents/mail/account-gmail"
 unmailboxes *
 set spoolfile = "+INBOX"
 set trash = "+Deleted"
