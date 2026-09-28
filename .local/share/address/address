@@ -1,0 +1,30 @@
+# vim:ft=conf
+# bookmarks for ~/.local/bin/address
+# @author nate zhou
+# @since 2025,2026
+# Everything before first `|` fuzzy find keywords
+
+# gpg
+keyserver ubuntu|https://keyserver.ubuntu.com
+# linux
+linux hardware support|https://linux-hardware.org/
+## archlinux
+archwiki|https://wiki.archlinux.org
+archlinux package search|https://archlinux.org/packages/
+archlinux aur|https://aur.archlinux.org
+########
+# source code host
+git codeberg|https://codeberg.org
+git github|https://github.com
+########
+# software
+gnu|https://www.gnu.org/home.en.html
+fsf|https://www.fsf.org/
+suckless|https://suckless.org
+qutebrowser|https://github.com/qutebrowser/qutebrowser
+########
+# public domain
+public domain freesound|https://freesound.org/
+public domain ebooks|https://www.gutenberg.org/
+# creative commons
+creative commons music|https://www.jamendo.com/

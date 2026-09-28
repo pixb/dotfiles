@@ -1,0 +1,10 @@
+# vim:ft=python
+# qutebrowser/search.py
+# @author nate zhou
+# @since 2025
+
+c.url.searchengines = {
+    'DEFAULT': 'https://www.bing.com/search?q={}',
+    'b': 'https://www.bing.com/search?q={}',
+    'w': 'https://wiki.archlinux.org/index.php?title=Special%3ASearch&search={}',
+}

@@ -1,0 +1,14 @@
+#!/usr/bin/sh
+# @author nate zhou
+# @since 2024,2025
+# set random wallpaper with swaybg
+
+WALLPAPER_PATH="$HOME/.local/share/wallpaper"
+
+random_wallpaper=$(find $HOME/Pictures/wallpapers -type f \
+                                             ! -name '*.mp4' \
+                                             ! -name '*.gif' \
+                                             ! -name '*.webm' \
+                 | shuf -n 1)
+
+$HOME/.local/bin/setwall "$random_wallpaper"

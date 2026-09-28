@@ -1,0 +1,36 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+.env
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Go telemetry
+go/.config/go/telemetry/
+
+# uv binaries (installed by arch_install_user.sh)
+.local/bin/uv
+.local/bin/uvx
+.local/bin/env
+.local/bin/env.fish
+
+# mpd music library (only track .mpdignore)
+mus/*
+!mus/.mpdignore
+
+# newsboat local config (copied from *.example by arch_install_user.sh)
+newsboat/.config/newsboat/urls
+newsboat/.config/newsboat/proxy.conf

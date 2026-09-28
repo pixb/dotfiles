@@ -1,0 +1,14 @@
+{
+  "header": {
+    "prefix": ["header", "fileheader"],
+    "body": [
+      "// ${TM_FILENAME}",
+      "// @author pix",
+      "// @since ${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}",
+      "// @desc ${1:TODO: description}",
+      "",
+      "$0"
+    ],
+    "description": "Rust file header"
+  }
+}

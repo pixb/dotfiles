@@ -1,0 +1,58 @@
+#!/usr/bin/sh
+# @author nate zhou
+# @since 2025,2026
+# @depends swayimg nsxiv(xorg) zathura qutebrowser w3m(tty)
+# url - rifle Execuate different open actions based on URL patterns.
+#
+# [Usage]
+# - newsboat:
+#   `browser "~/.local/bin/url-rifle %u"`
+#
+# - qutebrowser:
+#   `config.bind('xl', 'hint links userscript qute-rifle')`
+
+url="$1"
+
+print_err() {
+    local RED='\033[0;31m'
+    local RESET='\033[0m'
+    printf ${RED}"${1}"${RESET}\\n >&2
+}
+
+notify() {
+    [ "$XDG_SESSION_TYPE" = "tty" ] && return
+    notify-send -u low -t 3300 "$(basename $0)" "Downloading ${filetype}:\n $url"
+}
+
+[ -z "$1" ] && print_err "No URL specified." && exit 1
+
+
+case "$url" in
+    *jpeg|*jpg|*png|*gif|*webp|*svg)
+        {
+            image="${XDG_RUNTIME_DIR}/url-rifle.tmp"
+            curl --silent --location "$url" > "$image"
+
+            if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
+                viewer="swayimg --class='Floating_IMG'"
+            elif [ -n "$XAUTHORITY" ]; then
+                viewer="nsxiv --name='Floating_IMG' --no-bar"
+            fi
+
+            filetype="image" notify
+            $viewer $image
+        } &
+        ;;
+    *epub|*pdf)
+        filetype="document" notify
+        curl --silent --location "$url" | zathura - &
+        ;;
+    *)
+        if [ "$XDG_SESSION_TYPE" = "tty" ]; then
+            w3m "$url"
+        else
+            notify-send -u low -t 1100 "$(basename $0)" "Open in browser:\n $url"
+            qutebrowser --target auto --set tabs.show never "$url" &
+        fi
+        ;;
+esac

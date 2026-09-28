@@ -1,0 +1,34 @@
+#!/usr/bin/sh
+# @author nate zhou
+# @since 2024,2025,2026
+# filesystem label need match 'usb-*' (man 8 e2label)
+
+MY_SOURCE_PATH="$HOME/Documents $HOME/Music $HOME/Pictures $HOME/Videos"
+MY_DESTINATION="/run/media/${USER}/usb-*/back/"
+
+# change ext4 partition label with `e2label /dev/mapper/NAME NEW_NAME`
+set -x
+rsync --dry-run -avh --delete-after --progress \
+    --exclude=doc/heart/ \
+    --exclude=vid/extra/ \
+    --exclude="doc/heart/.config/fcitx/dbus/" \
+    --exclude="doc/heart/.config/ibus/" \
+    --exclude="doc/heart/.ssh/agent/" \
+    --exclude=".zig-cache" \
+    $MY_SOURCE_PATH $MY_DESTINATION
+set +x
+
+read -p "Continue? (y/n): " choice
+if [ "$choice" = "y" ] || [ "$choice" = "Y" ]; then
+    rsync -avh --delete-after --progress \
+        --exclude=doc/heart/ \
+        --exclude=vid/extra/ \
+        --exclude="doc/heart/.config/fcitx/dbus/" \
+        --exclude="doc/heart/.config/ibus/" \
+        --exclude="doc/heart/.ssh/agent/" \
+        --exclude=".zig-cache" \
+        $MY_SOURCE_PATH $MY_DESTINATION
+else
+    echo "aborted"
+    exit 0
+fi

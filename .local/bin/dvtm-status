@@ -1,0 +1,80 @@
+#!/usr/bin/sh
+# dvtm-status
+# @author nate zhou
+# @since 2025,2026
+
+FIFO="${XDG_RUNTIME_DIR}/dvtm-status.fifo"
+
+[ -p "$FIFO" ] || mkfifo -m 600 "$FIFO" || exit 1
+
+update_time () {
+	printf %s "$(date '+%b-%d %a %H:%M')"
+}
+
+update_battery () {
+    local POWER="/sys/class/power_supply"
+
+    ls "${POWER}/BAT?" >/dev/null 2>&1 || { printf %s "AC"; return; }
+
+    local status="$(cat $POWER/BAT?/status)"
+    local level="$(cat $POWER/BAT?/capacity)"
+    case "$status" in
+        "Discharging")
+            icon="BAT"
+            level="${level}%"
+            ;;
+        "Not charging")
+            icon="FUL" level="${level}%"
+            ;;
+        "Charging")
+            icon="CHR" level="${level}%"
+            ;;
+    esac
+    ls ${POWER}/BAT? > /dev/null || icon="CHR"
+    printf %s "${icon} ${level}"
+}
+
+update_mutt() {
+    local MAIL_DIR="$HOME/Documents/mail"
+    local count=0
+    local icon="MAIL"
+    # Loop through each mailbox directory
+    for mailbox in "$MAIL_DIR"/*; do
+        if [ -d "$mailbox" ]; then
+            # Manually specify folders instead of using brace expansion
+            for folder in "$mailbox/INBOX" "$mailbox/Junk"; do
+                for sub in cur new; do
+                    if [ -d "$folder/$sub" ]; then
+                        # Unread (no 'S' flag) within 7 days, in both cur/ and
+                        # new/: mutt or an mbsync rebuild moves new/ to cur/
+                        # and would otherwise zero the count.
+                        count=$(($count + $(find "$folder/$sub" -type f ! -name '*:2,*S*' -mtime -7 | wc -l)))
+                    fi
+                done
+            done
+        fi
+    done
+    printf %s "${icon} ${count}"
+}
+
+update_ttylogin() {
+    local count="$(w -h | wc -l )"
+    local icon="LOGIN"
+    printf %s "${icon} ${count}"
+}
+
+display() {
+    local separator="]["
+    echo "[$(update_ttylogin)${separator}$(update_mutt)${separator}$(update_battery)${separator}$(update_time)]"
+}
+
+while true; do
+    display
+	sleep 60
+done > "$FIFO" &
+
+STATUS_PID=$!
+dvtm -s "$FIFO" "$@" 2> /dev/null
+kill $STATUS_PID
+wait $STATUS_PID 2> /dev/null
+rm -f "$FIFO"

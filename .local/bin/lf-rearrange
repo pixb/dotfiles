@@ -1,0 +1,20 @@
+#!/usr/bin/sh
+# @author nate zhou
+# @since 2025,2026
+# Rearrange file list in lf:
+#   - Keep the sorted order
+#   - Make the currently focused file the first on the list
+# This script helps `.config/lf/rifle` to open files as they are sorted in lf
+
+LIST="${XDG_RUNTIME_DIR}/rifle"
+
+# Query the currently sorted order in lf
+lf -remote "query $id files" > "$LIST"
+
+# Make the currently focused file the first on the list
+# Disable regexp because some filename patterns would result in an empty match
+num=$(grep -Fn "$1" "$LIST" | cut -d: -f1)
+head=$(tail -n +"$num" "$LIST")
+tail=$(head -n $((num - 1)) "$LIST")
+
+printf "$head"\\n"$tail" > "$LIST"

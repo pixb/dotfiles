@@ -1,0 +1,109 @@
+set nu rnu
+
+set ignorecase      " Search ignoring case
+set smartcase       " Keep case when searching with *
+set infercase       " Adjust case in insert completion mode
+set incsearch       " Incremental search
+set hlsearch        " Highlight search results
+set wrapscan        " Searches wrap around the end of the file
+set showmatch       " Jump to matching bracket
+set matchpairs+=<:> " Add HTML brackets to pair matching
+set matchtime=1     " Tenths of a second to show the matching paren
+set cpoptions-=m    " showmatch will wait 0.5s or until a char is typed
+set grepprg=rg\ --vimgrep\ $*
+
+set autochdir
+" 高亮行
+set cursorline
+" 设置标尺
+set ruler
+" 设置光标滚动到顶部和底部时保持5行距离
+set scrolloff=5
+" 有空格时不自动换行
+set textwidth=0
+" 自动换行
+set wrap
+" 命令模式自动补全
+set wildmenu
+set wildmode=longest:list,full
+set listchars=tab:»·,nbsp:+,trail:·,extends:→,precedes:←
+
+
+let mapleader=' '
+let maplocalleader=';'
+
+inoremap jk <ESC>
+
+"insert a newline
+inoremap <C-O> <Esc>o
+
+"switch windw
+nnoremap <C-h> <C-w>h
+nnoremap <C-l> <C-w>l
+nnoremap <C-j> <C-w>j
+nnoremap <C-k> <C-w>k
+
+"smart move
+nnoremap j gj
+nnoremap k gk
+vnoremap j gj
+vnoremap k gk
+
+"yank to end
+nnoremap Y y$
+
+" 分屏
+" 分屏的快捷键
+nnoremap <LEADER>sl :set splitright<CR>:vsplit<CR>
+nnoremap <LEADER>sh :set nosplitright<CR>:vsplit<CR>
+nnoremap <LEADER>sj :set splitbelow<CR>:split<CR>
+nnoremap <LEADER>sk :set nosplitbelow<CR>:split<CR>
+
+
+" 引号快速插入与删除
+nnoremap <LEADER>w"  bi"<esc>ea"<esc>
+nnoremap <LEADER>w'  bi'<esc>ea'<esc>
+nnoremap <LEADER>l"  ^i"<esc>g_a"<esc>
+nnoremap <LEADER>l'  ^i'<esc>g_a"<esc>
+nnoremap <LEADER>d" ebF"xf"x
+nnoremap <LEADER>d' ebF'xf'x
+vnoremap w" xa""<esc>hpl
+vnoremap w' xa''<esc>hpl
+
+
+" ===========Markdown==============
+"autocmd Filetype markdown map <leader>w yiWi[<esc>Ea](<esc>pa)
+inoremap <buffer> ,f <Esc>/<++><CR>:nohlsearch<CR>c4l
+inoremap <buffer> ,w <Esc>/ <++><CR>:nohlsearch<CR>c5l<CR>
+inoremap <buffer> ,n ---<Enter><Enter>
+inoremap <buffer> ,b **** <++><Esc>F*hi
+inoremap <buffer> ,s ~~~~ <++><Esc>F~hi
+inoremap <buffer> ,i ** <++><Esc>F*i
+inoremap <buffer> ,d `` <++><Esc>F`i
+inoremap <buffer> ,c ```<Enter><++><Enter>```<Enter><Enter><++><Esc>4kA
+inoremap <buffer> ,m - [ ] <Enter><++><ESC>kA
+inoremap <buffer> ,p ![](<++>) <++><Esc>F[a
+inoremap <buffer> ,a [](<++>) <++><Esc>F[a
+inoremap <buffer> ,1 #<Space><Enter><++><Esc>kA
+inoremap <buffer> ,2 ##<Space><Enter><++><Esc>kA
+inoremap <buffer> ,3 ###<Space><Enter><++><Esc>kA
+inoremap <buffer> ,4 ####<Space><Enter><++><Esc>kA
+inoremap <buffer> ,l --------<Enter>
+
+
+
+" 插件模拟
+" surround
+set surround
+" multiple-cursors
+set multiple-cursors
+" easyMotion 模拟，额外依赖插件：AceJump,IdeaVim-EasyMotion
+set easymotion
+" 注释插件模拟
+set commentary
+
+" ==========idea action ===============
+nnoremap <LEADER>ru :action Run<CR>
+nnoremap <LEADER>rb :action Rebuild Project
+" 重命名
+nnoremap <leader>rn :action RenameElement<CR>

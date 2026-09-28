@@ -1,0 +1,46 @@
+#!/usr/bin/sh
+# @author nate zhou
+# @since 2025
+# Make tarballs for offline mailboxes synced with `mbsync`.
+# - Each mailbox has its own tarball.
+# - Keeps 3 most recent backup.
+# - Each day can have only 1 version, unless `-n, --now` is provided.
+# example in `./mail/mailboxes.backup/`:
+# account1_2025-06-22.tar account1_2025-06-23.tar account1_2025-06-24.tar
+# account2_2025-06-22.tar account2_2025-06-23.tar account2_2025-06-24.tar
+
+MAIL_DIR="$HOME/Documents/mail"
+
+TARGET_NAME="mailboxes.backup"
+TARGET_DIR="${MAIL_DIR}/${TARGET_NAME}"
+
+[ -d "$TARGET_DIR" ] || mkdir -p "$TARGET_DIR"
+
+current_date=$(date +'%Y-%m-%d')
+
+while [ -n "$1" ]; do
+    case "$1" in
+        -n|--now)
+            force_now=true
+            ;;
+    esac
+    shift
+done
+
+# backup
+for mailbox in "${MAIL_DIR}"/*/; do
+    dir_name=$(basename "$mailbox")
+
+    if [ "$dir_name" != "$TARGET_NAME" ]; then
+        tarball="${TARGET_DIR}/${dir_name}_${current_date}.tar"
+
+        if [ ! -f "$tarball" ] || [ "$force_now" = true ]; then
+            tar cvf "$tarball" -C "$MAIL_DIR" "$dir_name"
+
+            # keep the 3 most recent backup for each mailbox, remove the older
+            ls -rv "${TARGET_DIR}/${dir_name}_"*.tar | tail -n +4 | xargs -r rm --
+        else
+            echo "Backup for $dir_name on $current_date already exists."
+        fi
+    fi
+done

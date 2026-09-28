@@ -1,0 +1,486 @@
+#!/usr/bin/env bash
+
+# === Color ===
+COLOR_GREEN='\033[0;32m'
+COLOR_RED='\033[0;31m'
+COLOR_YELLOW='\033[0;33m'
+COLOR_NC='\033[0m'
+
+# === handing failures and errors. ===
+set -euo pipefail
+
+# === Time ===
+TIME="$(date +%Y-%m-%d_%H-%M-%S)"
+# === File Variable ===
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" || exit 1
+SCRIPT_FULL_NAME="$(basename "${BASH_SOURCE[0]}")"
+SCRIPT_FILE_NAME="${SCRIPT_FULL_NAME%.*}"
+
+echo -e "${COLOR_GREEN}SCRIPT_DIR = ${SCRIPT_DIR} ${COLOR_NC}"
+echo -e "${COLOR_GREEN}SCRIPT_FULL_NAME = ${SCRIPT_FULL_NAME} ${COLOR_NC}"
+echo -e "${COLOR_GREEN}SCRIPT_FILE_NAME = ${SCRIPT_FILE_NAME} ${COLOR_NC}"
+
+# res path
+SCRIPT_RES_DIR="${HOME}/Downloads"
+if [ ! -e ${SCRIPT_RES_DIR} ]; then
+  mkdir -p ${SCRIPT_RES_DIR}
+fi
+
+# Define the methods for install Arch Linux packages.
+
+# AUR helper: trizen is unmaintained; prefer paru/yay if available.
+AUR_HELPER="$(command -v paru || command -v yay || command -v trizen || echo trizen)"
+
+pacman_install_noconfirm() {
+  sudo pacman -S "$1" --noconfirm --needed
+}
+
+aur_install_noconfirm() {
+  "$AUR_HELPER" -S "$1" --noconfirm --needed
+}
+
+echo_not_found() {
+  echo -e "${COLOR_YELLOW}$1 is not installed, installing...${COLOR_NC}"
+}
+
+echo_is_existed() {
+  echo -e "${COLOR_GREEN}$1 is already installed.${COLOR_NC}"
+}
+
+echo_install_failed() {
+  echo -e "${COLOR_RED}Failed to install $1.${COLOR_NC}" >&2
+}
+
+# Check whether a package is installed in the local pacman database.
+# AUR packages installed via any helper are also tracked here.
+# Returns 0 if installed, 1 otherwise.
+check_install() {
+  if pacman -Qi "$1" >/dev/null 2>&1; then
+    echo_is_existed "$1"
+    return 0
+  else
+    echo_not_found "$1"
+    return 1
+  fi
+}
+
+# Install one package from official repos if not already installed.
+pacman_install() {
+  for package in "$@"; do
+    if ! check_install "$package"; then
+      if ! pacman_install_noconfirm "$package"; then
+        echo_install_failed "$package"
+        return 1
+      fi
+    fi
+  done
+}
+
+# Install one package from AUR (or any repo the helper supports) if not installed.
+aur_install() {
+  for package in "$@"; do
+    if ! check_install "$package"; then
+      if ! aur_install_noconfirm "$package"; then
+        echo_install_failed "$package"
+        return 1
+      fi
+    fi
+  done
+}
+
+systemctl_enable() {
+  # 未启用才 enable
+  if [ "$(systemctl is-enabled $1 2>/dev/null || true)" != "enabled" ]; then
+    echo -e "${COLOR_GREEN}enabling $1.${COLOR_NC}"
+    sudo systemctl enable $1
+  else
+    echo -e "${COLOR_GREEN}$1 already enabled${COLOR_NC}"
+  fi
+}
+
+systemctl_start() {
+  # 未运行才 start
+  if [ "$(systemctl is-active $1 2>/dev/null || true)" != "active" ]; then
+    echo -e "${COLOR_GREEN}starting $1${COLOR_NC}"
+    sudo systemctl start $1
+  else
+    echo -e "${COLOR_GREEN}$1 already running${COLOR_NC}"
+  fi
+}
+
+### Install nodejs
+
+pacman_install nodejs npm
+
+if [ ! -e ${HOME}/.npm-global ]; then
+  mkdir -p ${HOME}/.npm-global
+fi
+
+npm config set prefix ~/.npm-global
+
+pacman_install stow
+# transparent encryption for private/secrets git repo (NAS Gitea)
+pacman_install git-crypt
+
+# === dotfiles ===
+DOTFILES_PATH=${HOME}/dotfiles
+
+# === vimrc ===
+cd ${DOTFILES_PATH}
+stow -t ~ vim
+stow -t ~ zsh
+stow -t ~ git
+stow -t ~ shell
+stow -t ~ go
+stow -t ~ gnupg
+cd ${SCRIPT_DIR}
+
+if [ -e $HOME/.sdkman/bin/sdkman-init.sh ]; then
+  echo -e "${COLOR_GREEN}sdkman is installed${COLOR_NC}"
+  set +u
+  source "$HOME/.sdkman/bin/sdkman-init.sh"
+  set -u
+else
+  echo -e "${COLOR_YELLOW}sdkman not init, init...${COLOR_NC}"
+  curl -s "https://get.sdkman.io" | bash
+fi
+
+if command -v java &>/dev/null; then
+  echo -e "${COLOR_GREEN}java is installed${COLOR_NC}"
+else
+  echo -e "${COLOR_YELLOW}java is not install${COLOR_NC}"
+  if command -v sdk &>/dev/null; then
+    echo -e "${COLOR_GREEN}sdkman is installed${COLOR_GREEN}"
+    set +u
+    if [ ! -e ${HOME}/.sdkman/candidates/java/11.0.23-tem ]; then
+      sdk install java 11.0.23-tem
+    fi
+    set -u
+  else
+    echo -e "${COLOR_YELLOW}sdknam is not install${COLOR_NC}"
+  fi
+fi
+
+# === Create dev ===
+if [ -d "${HOME}/dev" ]; then
+  echo -e "${COLOR_GREEN}${HOME}/dev is exists${COLOR_NC}"
+else
+  echo -e "${COLOR_YELLOW}${HOME}/dev is not exists${COLOR_NC}"
+  mkdir -p "${HOME}/dev"
+fi
+
+# === install trizen ===
+if command -v trizen &>/dev/null; then
+  echo -e "${COLOR_GREEN}trizen is installed.${COLOR_NC}"
+else
+  rm -rf "${SCRIPT_RES_DIR}/trizen"
+  git clone https://aur.archlinux.org/trizen.git "${SCRIPT_RES_DIR}/trizen"
+  cd "${SCRIPT_RES_DIR}/trizen" || exit
+  makepkg -si --noconfirm
+  cd ${SCRIPT_DIR}
+fi
+
+cd "${HOME}/dotfiles" || exit
+stow -t ~ trizen
+cd "${SCRIPT_DIR}" || exit
+
+pacman_install neovim openssh tk fzf the_silver_searcher
+pacman_install tmux go ripgrep lazygit imagemagick highlight
+pacman_install p7zip rsync cifs-utils smbclient stow
+pacman_install brightnessctl wob pacman-contrib
+pacman_install neomutt isync
+
+# === pgloader (PostgreSQL migration CLI, AUR; builds from Common Lisp source) ===
+aur_install pgloader
+
+# === psql (PostgreSQL client CLI) ===
+pacman_install postgresql-libs
+
+# ssh service start
+if command -v ssh >/dev/null 2>&1; then
+  echo -e "${COLOR_GREEN}openssh is installed${COLOR_NC}"
+
+  # 未启用才 enable
+  systemctl_enable sshd.service
+  # 未运行才 start
+  systemctl_start sshd.service
+fi
+
+# pyenv
+if [ -d "${HOME}"/.pyenv ]; then
+  echo -e "${COLOR_GREEN}pyenv is installed${COLOR_NC}"
+  export PATH=$HOME/.pyenv/bin:$PATH
+  eval "$(pyenv init -)"
+else
+  echo -e "${COLOR_YELLOW}pyenv is not install${COLOR_NC}"
+  git clone https://github.com/pyenv/pyenv.git "${HOME}"/.pyenv
+  export PATH=$HOME/.pyenv/bin:$PATH
+  eval "$(pyenv init -)"
+fi
+
+if command -v pyenv &>/dev/null; then
+  if pyenv versions --bare | grep -qx "3.12.13"; then
+    echo "3.12.13 已安装，跳过"
+  else
+    pyenv install 3.12.13
+    pyenv global 3.12.13
+  fi
+fi
+
+# === uv (Python package manager) ===
+if command -v uv &>/dev/null; then
+  echo_is_existed "uv"
+else
+  echo_not_found "uv"
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  export PATH="$HOME/.local/bin:$PATH"
+fi
+
+# === ranger ===
+pip3 install setuptools || true
+aur_install ranger-git
+
+cd ${DOTFILES_PATH}
+stow -t ~ ranger
+cd ${SCRIPT_DIR}
+
+# === lf (file manager; scope previewer deployed with the .local package) ===
+pacman_install lf bat chafa catimg w3m ffmpegthumbnailer mediainfo perl-image-exiftool python-mutagen
+
+cd ${DOTFILES_PATH}
+stow -t ~ lf
+cd ${SCRIPT_DIR}
+
+aur_install fastfetch
+pacman_install gdb gcc cmake meson htop btop duf usbutils rust
+
+# === mechrevo laptop drivers (Tongfang EC fan/keyboard control) ===
+if grep -qi 'MECHREVO' /sys/devices/virtual/dmi/id/sys_vendor 2>/dev/null; then
+  pacman_install dkms linux-headers
+  aur_install mechrevo-drivers-dkms
+
+  # compile and install EC fan reader
+  if [ -f "${SCRIPT_DIR}/mechrevo-fan.c" ]; then
+    sudo gcc -O2 -s -o /usr/local/bin/mechrevo-fan "${SCRIPT_DIR}/mechrevo-fan.c"
+    sudo chmod 755 /usr/local/bin/mechrevo-fan
+  fi
+
+  # install fanmode-cron and crontab entry
+  if [ -f "${SCRIPT_DIR}/fanmode-cron" ]; then
+    sudo cp "${SCRIPT_DIR}/fanmode-cron" /usr/local/bin/fanmode-cron
+    sudo chmod 755 /usr/local/bin/fanmode-cron
+    echo '*/5 * * * * root /usr/local/bin/fanmode-cron' | sudo tee /etc/cron.d/fanmode >/dev/null
+    sudo chmod 644 /etc/cron.d/fanmode
+  fi
+fi
+
+if [ ! -d $HOME/.tmux ]; then
+  bash ${SCRIPT_DIR}/../tmux/config_tmux.sh
+fi
+
+pacman_install bc
+
+if command -v pkgfile &>/dev/null; then
+  echo -e "${COLOR_GREEN}pkgfile is installed${COLOR_NC}"
+  sudo pkgfile --update || true
+else
+  echo -e "${COLOR_YELLOW}pkgfile is not install${COLOR_NC}"
+  sudo pacman -S pkgfile --noconfirm
+fi
+
+pacman_install openbsd-netcat
+pacman_install docker
+pacman_install docker-compose
+if [ ! -d /etc/docker ]; then
+  sudo mkdir -p /etc/docker
+fi
+
+if [ ! -e /etc/docker/daemon.json ]; then
+  sudo tee -a /etc/docker/daemon.json <<EOF
+{
+    "registry-mirrors": [
+      "https://docker.xuanyuan.me",
+      "https://docker.1ms.run",
+      "https://docker.m.daocloud.io",
+      "https://docker.1panel.live",
+      "https://registry.hub.docker.com",
+      "https://docker.m.daocloud.io"
+    ]
+}
+EOF
+fi
+
+systemctl_enable docker
+systemctl_start docker
+
+# === cronie (periodic tasks for damblocks) ===
+pacman_install cronie
+systemctl_enable cronie
+systemctl_start cronie
+
+# === checkupdates-cron (pacman update count for damblocks) ===
+# scripts managed by stow via install_river.sh (stow -t ~/.local .local)
+
+# /etc/cron.d/checkupdates
+# NOTE: cron.d requires a user field and does not expand $HOME at run time,
+# so both are expanded here at install time (unquoted heredoc).
+# Only rewrite when the content actually differs, so local edits survive re-runs.
+CRON_CHECKUPDATES="$(
+  cat <<CRON
+@reboot $(id -un) ${HOME}/.local/bin/checkupdates-cron --now
+*/15 * * * * $(id -un) ${HOME}/.local/bin/checkupdates-cron
+CRON
+)"
+if [ "$(cat /etc/cron.d/checkupdates 2>/dev/null || true)" != "$CRON_CHECKUPDATES" ]; then
+  printf '%s\n' "$CRON_CHECKUPDATES" | sudo tee /etc/cron.d/checkupdates >/dev/null
+  sudo chmod 644 /etc/cron.d/checkupdates
+fi
+
+# initial cache (run after stow creates symlinks)
+if [ -x "${HOME}/.local/bin/checkupdates-cron" ]; then
+  "${HOME}/.local/bin/checkupdates-cron" --now || true
+fi
+
+# === wttr (weather report for damblocks/i3status) ===
+# city file consumed by .local/bin/wttr
+CITY_FILE="${HOME}/.cache/city"
+if [ ! -f "$CITY_FILE" ] || [ -z "$(cat "$CITY_FILE" 2>/dev/null)" ]; then
+  if [ -t 0 ]; then
+    read -rp "Enter your city (for wttr script): " REPLY || REPLY=""
+    [ -n "$REPLY" ] && printf '%s\n' "$REPLY" >"$CITY_FILE"
+  else
+    echo -e "${COLOR_YELLOW}WARNING: $CITY_FILE is not set (non-interactive); run 'wttr -e' to set your city, otherwise /etc/cron.d/wttr will keep failing${COLOR_NC}" >&2
+  fi
+fi
+
+# /etc/cron.d/wttr (user field + $HOME expanded at install time,
+# rewritten only when the content differs)
+CRON_WTTR="$(
+  cat <<CRON
+@reboot $(id -un) ${HOME}/.local/bin/wttr --update
+*/5 * * * * $(id -un) ${HOME}/.local/bin/wttr --cron
+CRON
+)"
+if [ "$(cat /etc/cron.d/wttr 2>/dev/null || true)" != "$CRON_WTTR" ]; then
+  printf '%s\n' "$CRON_WTTR" | sudo tee /etc/cron.d/wttr >/dev/null
+  sudo chmod 644 /etc/cron.d/wttr
+fi
+
+# initial weather cache (run after stow creates symlinks)
+if [ -x "${HOME}/.local/bin/wttr" ] && [ -s "${CITY_FILE}" ]; then
+  "${HOME}/.local/bin/wttr" --update || true
+fi
+
+# === newsboat (RSS reader; unread count for damblocks) ===
+# config managed by stow via install_ui.sh (stow -t ~ newsboat)
+pacman_install newsboat
+
+# initial local config from examples (urls/proxy.conf are local, gitignored)
+NEWSBOAT_DIR="${HOME}/.config/newsboat"
+if [ ! -d "$NEWSBOAT_DIR" ]; then
+  mkdir -p "$NEWSBOAT_DIR"
+fi
+if [ ! -f "${NEWSBOAT_DIR}/proxy.conf" ] && [ -f "${DOTFILES_PATH}/newsboat/.config/newsboat/proxy.conf.example" ]; then
+  cp "${DOTFILES_PATH}/newsboat/.config/newsboat/proxy.conf.example" "${NEWSBOAT_DIR}/proxy.conf"
+fi
+if [ ! -f "${NEWSBOAT_DIR}/urls" ] && [ -f "${DOTFILES_PATH}/newsboat/.config/newsboat/urls.example" ]; then
+  cp "${DOTFILES_PATH}/newsboat/.config/newsboat/urls.example" "${NEWSBOAT_DIR}/urls"
+fi
+
+# initial unread cache (epoch mtime so the first cron run triggers an update)
+NEWS_NUM="${HOME}/.cache/newsboat.num"
+if [ ! -f "$NEWS_NUM" ]; then
+  printf '0' >"$NEWS_NUM"
+  touch --date='1970-01-01 00:00:00' "$NEWS_NUM"
+fi
+
+# /etc/cron.d/newsboat (user field + $HOME expanded at install time,
+# rewritten only when the content differs; update-cron must run before
+# num-cron: both throttle on the same ~/.cache/newsboat.num mtime)
+CRON_NEWSBOAT="$(
+  cat <<CRON
+@reboot $(id -un) ${HOME}/.local/bin/newsboat-update-cron
+*/15 * * * * $(id -un) ${HOME}/.local/bin/newsboat-update-cron
+# status bar newsboat unread count
+@reboot $(id -un) ${HOME}/.local/bin/newsboat-num-cron
+*/15 * * * * $(id -un) ${HOME}/.local/bin/newsboat-num-cron
+CRON
+)"
+if [ "$(cat /etc/cron.d/newsboat 2>/dev/null || true)" != "$CRON_NEWSBOAT" ]; then
+  printf '%s\n' "$CRON_NEWSBOAT" | sudo tee /etc/cron.d/newsboat >/dev/null
+  sudo chmod 644 /etc/cron.d/newsboat
+fi
+
+# initial feeds fetch + unread count (run after stow creates symlinks)
+if [ -x "${HOME}/.local/bin/newsboat-update-cron" ]; then
+  "${HOME}/.local/bin/newsboat-update-cron" --now || true
+fi
+
+# === mutt/neomutt email client ===
+# mutt config managed by stow via install_ui.sh (stow -t ~ mutt)
+# XOAUTH2 SASL plugin for Gmail OAuth2 (AUR)
+if ! pacman -Qi cyrus-sasl-xoauth2-git >/dev/null 2>&1; then
+  "$AUR_HELPER" -S cyrus-sasl-xoauth2-git --noconfirm --needed || true
+fi
+# create maildir structure for accounts
+mkdir -p ~/Documents/mail/account-{gmail,private,public,unixchad}
+# initial isyncrc if not exists
+if [ ! -f "${HOME}/.config/isyncrc" ] && [ -f "${DOTFILES_PATH}/mutt/.config/isyncrc.example" ]; then
+  cp "${DOTFILES_PATH}/mutt/.config/isyncrc.example" "${HOME}/.config/isyncrc"
+  echo -e "${COLOR_YELLOW}Please edit ~/.config/isyncrc with your email accounts${COLOR_NC}"
+fi
+# initial Gmail account config template
+if [ ! -f "${HOME}/.config/mutt/account-gmail.muttrc" ] && [ -f "${DOTFILES_PATH}/mutt/.config/mutt/account-gmail.muttrc.example" ]; then
+  cp "${DOTFILES_PATH}/mutt/.config/mutt/account-gmail.muttrc.example" "${HOME}/.config/mutt/account-gmail.muttrc"
+  echo -e "${COLOR_YELLOW}Please edit ~/.config/mutt/account-gmail.muttrc with your Gmail address${COLOR_NC}"
+fi
+
+pacman_install pipewire
+pacman_install pipewire-pulse
+pacman_install pipewire-alsa
+pacman_install wireplumber
+systemctl --user enable --now pipewire pipewire-pulse wireplumber
+
+pacman_install bluez
+pacman_install bluez-utils
+pacman_install bluetui
+systemctl_enable bluetooth
+systemctl_start bluetooth
+pacman_install nethogs
+pacman_install fd
+
+# samba
+pacman_install samba
+cd "${DOTFILES_PATH}"
+sudo stow -t / samba
+cd "${SCRIPT_DIR}"
+mkdir -p ~/work
+
+# create samba user
+sudo groupadd sambashare 2>/dev/null || true
+sudo usermod -aG sambashare "$(whoami)"
+
+# 检查用户是否已在 samba 密码数据库中，不存在时才设置
+if ! sudo pdbedit -L 2>/dev/null | grep -q "^$(whoami):"; then
+  echo "设置 samba 密码（将用于 Windows/macOS 访问共享）:"
+  sudo smbpasswd -a "$(whoami)"
+else
+  echo -e "${COLOR_GREEN}$(whoami) 已存在于 samba 密码数据库，跳过设置${COLOR_NC}"
+fi
+
+systemctl_enable smb
+systemctl_start smb
+systemctl_enable nmb
+systemctl_start nmb
+
+aur_install herdr-bin
+npm install -g --allow-scripts=opencode-ai opencode-ai || true
+
+# === pi agent ===
+npm install -g --ignore-scripts @earendil-works/pi-coding-agent || true
+
+# === pglr (secure PostgreSQL CLI for AI tools) ===
+npm install -g pglr || true
+
+pacman_install inetutils
+pacman_install github-cli

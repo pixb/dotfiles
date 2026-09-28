@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# sync-config-root
+# push user shell/file-manager/vim configs to /root as a stow package
+# @author nate zhou
+# @since 2025,2026
+# @adapted 2026-09-27 for pix: doc/heart home-layout tree -> ~/dotfiles
+#          stow packages (shell/, lf/, vim/ + scope)
+
+DOTFILES="$HOME/dotfiles"
+
+sudo mkdir -p /root/heart/.config/shell /root/heart/.config/lf
+
+# shell: .bashrc + profile/teleport (home layout inside package)
+sudo rsync -a --progress \
+    "$DOTFILES/shell/.bashrc" /root/heart/
+sudo rsync -a --delete-after --progress \
+    "$DOTFILES/shell/.config/shell/" /root/heart/.config/shell/
+
+# lf config (scoped delete inside .config/lf only)
+sudo rsync -a --delete-after --progress \
+    "$DOTFILES/lf/.config/lf/" /root/heart/.config/lf/
+
+# lf scope reader lives in .local/bin, used as .config/lf/scope
+sudo rsync -a --progress \
+    "$DOTFILES/.local/bin/scope" /root/heart/.config/lf/scope
+
+# vim
+sudo rsync -a --progress \
+    "$DOTFILES/vim/.vimrc" /root/heart/
+
+# symlink heart into /root (--adopt absorbs any pre-existing root files)
+sudo stow -R --adopt -d /root/heart -t /root .

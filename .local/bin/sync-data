@@ -1,0 +1,36 @@
+#!/usr/bin/sh
+# @author nate zhou
+# @since 2024,2025
+
+my_source_path="$HOME/Documents $HOME/Music $HOME/Pictures $HOME/Videos $HOME/pkg"
+my_destination="/data/"
+
+set -x
+# Do not quote $my_source_path as rsync would take the paths with space as a
+# single argument, looking for a non-existing directory with that long
+# concatenated path. The simplest way is to not quote the path, but make sure
+# there aren't spaces or slash as a part of the file's pathname.
+rsync --dry-run -avh --delete-after --progress \
+      --include="doc/heart/.config/Code - OSS/User/*" \
+      --exclude="doc/heart/.config/Code - OSS/" \
+      --exclude="doc/heart/.config/fcitx/dbus/" \
+      --exclude="doc/heart/.config/ibus/" \
+      --exclude="doc/heart/.ssh/agent/" \
+      --exclude=".zig-cache" \
+      $my_source_path $my_destination
+set +x
+
+read -p "Continue? (y/n): " choice
+if [ "$choice" = "y" ] || [ "$choice" = "Y" ]; then
+    rsync -avh --delete-after --progress \
+        --include="doc/heart/.config/Code - OSS/User/***" \
+        --exclude="doc/heart/.config/Code - OSS/*" \
+        --exclude="doc/heart/.config/fcitx/dbus/" \
+        --exclude="doc/heart/.config/ibus/" \
+        --exclude="doc/heart/.ssh/agent/" \
+        --exclude=".zig-cache" \
+        $my_source_path $my_destination
+else
+    echo "aborted"
+    exit 0
+fi

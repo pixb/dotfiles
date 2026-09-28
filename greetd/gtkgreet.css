@@ -1,0 +1,127 @@
+window {
+    background-image: url("file:///etc/greetd/background.jpg");
+    background-size: cover;
+    background-position: center;
+    background-color: #282828;
+}
+
+headerbar,
+.titlebar,
+decoration,
+separator,
+headerbar separator,
+.titlebar separator {
+    min-height: 0;
+    min-width: 0;
+    padding: 0;
+    margin: 0;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    opacity: 0;
+}
+
+headerbar *,
+.titlebar *,
+decoration * {
+    min-height: 0;
+    min-width: 0;
+    padding: 0;
+    margin: 0;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    opacity: 0;
+}
+
+#clock {
+    color: #ebdbb2;
+    font-family: "NotoSansM Nerd Font Mono";
+    font-size: 48px;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+    margin-bottom: 24px;
+    min-height: 60px;
+}
+
+box#body {
+    background-color: rgba(40, 40, 40, 0.85);
+    border-radius: 16px;
+    padding: 80px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+#body > box > box > label {
+    color: #ebdbb2;
+    font-family: "NotoSansM Nerd Font Mono";
+    font-size: 42px;
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
+}
+
+entry {
+    color: #ebdbb2;
+    background-color: #3c3836;
+    border-radius: 10px;
+    padding: 20px 28px;
+    font-family: "NotoSansM Nerd Font Mono";
+    font-size: 40px;
+    border: 3px solid #504945;
+    caret-color: #ebdbb2;
+    box-shadow: none;
+    min-height: 60px;
+}
+
+entry:focus {
+    border: 3px solid #458588;
+    box-shadow: 0 0 6px #458588;
+}
+
+combobox {
+    font-family: "NotoSansM Nerd Font Mono";
+    font-size: 36px;
+    min-height: 80px;
+}
+
+combobox button {
+    font-family: "NotoSansM Nerd Font Mono";
+    font-size: 36px;
+    min-height: 80px;
+    padding: 20px 24px;
+}
+
+combobox button label {
+    font-family: "NotoSansM Nerd Font Mono";
+    font-size: 36px;
+    min-height: 80px;
+}
+
+combobox arrow {
+    min-height: 80px;
+}
+
+text {
+    font-family: "NotoSansM Nerd Font Mono";
+    font-size: 36px;
+}
+
+.text-button {
+    color: #ebdbb2;
+    background-color: #3c3836;
+    border-radius: 10px;
+    padding: 20px 36px;
+    font-family: "NotoSansM Nerd Font Mono";
+    font-size: 38px;
+    border: 3px solid #504945;
+    margin: 8px;
+    min-height: 60px;
+}
+
+.text-button:hover {
+    background-color: #504945;
+    border: 3px solid #665c54;
+}
+
+.text-button:checked {
+    background-color: #458588;
+    border: 3px solid #83a598;
+    color: #ffffff;
+}

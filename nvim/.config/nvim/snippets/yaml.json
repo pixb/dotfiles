@@ -1,0 +1,24 @@
+{
+  "box": {
+    "prefix": ["box", "section"],
+    "body": [
+      "###############",
+      "#  ${1:title}  #",
+      "###############",
+      "$0"
+    ],
+    "description": "Box section comment (adjust # to match title width)"
+  },
+  "header": {
+    "prefix": ["header", "fileheader"],
+    "body": [
+      "# ${TM_FILENAME}",
+      "# @author pix",
+      "# @since ${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}",
+      "# @desc ${1:TODO: description}",
+      "",
+      "$0"
+    ],
+    "description": "YAML file header"
+  }
+}

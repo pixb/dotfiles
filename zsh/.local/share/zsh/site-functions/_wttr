@@ -1,0 +1,20 @@
+#compdef wttr
+
+_wttr() {
+  local -a opts
+  opts=(
+    '-u:update the local weather cache'
+    '--update:update the local weather cache'
+    '-c:cron mode, update cache if stale'
+    '--cron:cron mode, update cache if stale'
+    '-e:edit the city file'
+    '--edit:edit the city file'
+    '-g:print the configured city'
+    '--geo:print the configured city'
+    '-h:show usage'
+    '--help:show usage'
+  )
+  (( CURRENT == 2 )) && _describe 'option' opts
+}
+
+_wttr "$@"

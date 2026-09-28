@@ -1,0 +1,6 @@
+[terminal]
+vt = 1
+
+[default_session]
+command = "cage -s -m extend -- /etc/greetd/start-greeter.sh"
+user = "greeter"
