@@ -179,5 +179,8 @@ zinit snippet OMZ::plugins/sudo/sudo.plugin.zsh
 [[ -s "/home/pix/.gvm/scripts/gvm" ]] && source "/home/pix/.gvm/scripts/gvm"
 
 if [ -e ${HOME}/dev/env ]; then
-  . <(gpg -d "${home}/dev/env/agentmemory.env.gpg" 2>/dev/null)
+  . <(gpg -d ~/dev/env/env/agentmemory.env.gpg 2>/dev/null)
+  . <(gpg -d ~/dev/env/env/amux.env.gpg 2>/dev/null)
+  # eval "$(gpg --decrypt ~/dev/env/env/agentmemory.env.gpg 2>/dev/null)"
+  # eval "$(gpg --decrypt ~/dev/env/env/amux.env.gpg 2>/dev/null)"
 fi

@@ -310,6 +310,7 @@ if [ ! -e /etc/docker/daemon.json ]; then
 EOF
 fi
 
+sudo usermod -aG docker $USER
 systemctl_enable docker
 systemctl_start docker
 
