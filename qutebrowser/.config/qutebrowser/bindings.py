@@ -37,7 +37,8 @@ config.bind('zz', 'zoom {}'.format(c.zoom.default))
 
 config.bind('zf', 'config-cycle fonts.web.size.minimum 0 18')
 
-# manually toggle canvas reading if some website's breaking
+# canvas reading is off by default; toggle it ON when a captcha fails
+# (Cloudflare Turnstile returns 600010 with --disable-reading-from-canvas)
 config.bind(
         'zc',
         'config-cycle content.canvas_reading true false ;; \
