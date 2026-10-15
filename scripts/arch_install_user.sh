@@ -485,3 +485,10 @@ npm install -g pglr || true
 
 pacman_install inetutils
 pacman_install github-cli
+
+if ! command -v yd &>/dev/null; then
+  npm install yddict -g
+fi
+
+pacman_install git-lfs
+git lfs install
