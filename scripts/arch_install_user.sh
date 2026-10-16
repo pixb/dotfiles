@@ -492,3 +492,5 @@ fi
 
 pacman_install git-lfs
 git lfs install
+
+pacman_install sg3_utils
