@@ -51,6 +51,15 @@ echo_install_failed() {
   echo -e "${COLOR_RED}Failed to install $1.${COLOR_NC}" >&2
 }
 
+warn() {
+  echo -e "${COLOR_YELLOW}[warn] $*${COLOR_NC}" >&2
+}
+
+die() {
+  echo -e "${COLOR_RED}[fail] $*${COLOR_NC}" >&2
+  exit 1
+}
+
 # Check whether a package is installed in the local pacman database.
 # AUR packages installed via any helper are also tracked here.
 # Returns 0 if installed, 1 otherwise.
@@ -133,6 +142,10 @@ stow -t ~ git
 stow -t ~ shell
 stow -t ~ go
 stow -t ~ gnupg
+mkdir -p "${HOME}/.local"
+# --no-folding keeps ~/.local/bin and ~/.local/share real directories so tools
+# that install there (uv, pip) do not write into the dotfiles repo.
+stow --no-folding -t ~/.local .local
 cd ${SCRIPT_DIR}
 
 if [ -e $HOME/.sdkman/bin/sdkman-init.sh ]; then
@@ -421,19 +434,25 @@ fi
 # mutt config managed by stow via install_ui.sh (stow -t ~ mutt)
 # XOAUTH2 SASL plugin for Gmail OAuth2 (AUR)
 if ! pacman -Qi cyrus-sasl-xoauth2-git >/dev/null 2>&1; then
-  "$AUR_HELPER" -S cyrus-sasl-xoauth2-git --noconfirm --needed || true
+  "$AUR_HELPER" -S cyrus-sasl-xoauth2-git --noconfirm --needed ||
+    warn "cyrus-sasl-xoauth2-git install failed, Gmail OAuth2 will be unavailable"
 fi
 # create maildir structure for accounts
 mkdir -p ~/Documents/mail/account-{gmail,private,public,unixchad}
 # initial isyncrc if not exists
-if [ ! -f "${HOME}/.config/isyncrc" ] && [ -f "${DOTFILES_PATH}/mutt/.config/isyncrc.example" ]; then
+if [ ! -f "${HOME}/.config/isyncrc" ]; then
+  [ -f "${DOTFILES_PATH}/mutt/.config/isyncrc.example" ] ||
+    die "missing template: ${DOTFILES_PATH}/mutt/.config/isyncrc.example"
   cp "${DOTFILES_PATH}/mutt/.config/isyncrc.example" "${HOME}/.config/isyncrc"
-  echo -e "${COLOR_YELLOW}Please edit ~/.config/isyncrc with your email accounts${COLOR_NC}"
+  warn "Please edit ~/.config/isyncrc with your email accounts"
 fi
 # initial Gmail account config template
-if [ ! -f "${HOME}/.config/mutt/account-gmail.muttrc" ] && [ -f "${DOTFILES_PATH}/mutt/.config/mutt/account-gmail.muttrc.example" ]; then
+if [ ! -f "${HOME}/.config/mutt/account-gmail.muttrc" ]; then
+  [ -f "${DOTFILES_PATH}/mutt/.config/mutt/account-gmail.muttrc.example" ] ||
+    die "missing template: ${DOTFILES_PATH}/mutt/.config/mutt/account-gmail.muttrc.example"
+  mkdir -p "${HOME}/.config/mutt"
   cp "${DOTFILES_PATH}/mutt/.config/mutt/account-gmail.muttrc.example" "${HOME}/.config/mutt/account-gmail.muttrc"
-  echo -e "${COLOR_YELLOW}Please edit ~/.config/mutt/account-gmail.muttrc with your Gmail address${COLOR_NC}"
+  warn "Please edit ~/.config/mutt/account-gmail.muttrc with your Gmail address"
 fi
 
 pacman_install pipewire
@@ -453,7 +472,9 @@ pacman_install fd
 # samba
 pacman_install samba
 cd "${DOTFILES_PATH}"
-sudo stow -t / samba
+if [ ! -e /etc/samba/smb.conf ]; then
+  sudo stow -t / samba
+fi
 cd "${SCRIPT_DIR}"
 mkdir -p ~/work
 
