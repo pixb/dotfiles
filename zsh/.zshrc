@@ -185,15 +185,5 @@ if [ -e ${HOME}/dev/env ]; then
   # eval "$(gpg --decrypt ~/dev/env/env/amux.env.gpg 2>/dev/null)"
 fi
 
-########################
-#  agent-network test  #
-########################
-
-# ✅ Token created: atok_9ccead891e3c491b8064397c65a1485b
-#   Name: tetris-planner
-#   ID:   tok_085757f2849f
-export TETRIS_PLANNER_TOKEN="atok_9ccead891e3c491b8064397c65a1485b"
-export ANET_HUB_TOKEN="ntok_d1a0fbeda182439e8c0808332d96d7af"
-
 # flutter (install_flutter_web.sh)
 export PATH="$PATH:/home/pix/.local/share/flutter/bin"

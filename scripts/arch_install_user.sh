@@ -515,3 +515,4 @@ pacman_install git-lfs
 git lfs install
 
 aur_install ast-grep
+pacman_install bun
