@@ -187,3 +187,4 @@ fi
 
 # flutter (install_flutter_web.sh)
 export PATH="$PATH:/home/pix/.local/share/flutter/bin"
+export ANET_HUB_TOKEN="atok_820179a164ca41ccbc3ba21f770e9600"
