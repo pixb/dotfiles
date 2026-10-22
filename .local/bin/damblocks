@@ -189,9 +189,10 @@ update_fanmode() {
             0|auto) icon="󱜝" ;;
         esac
         speed="$(grep 'speed:' "$POLICY_IBM" | awk '{print $2}')"
-    elif [ -f "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/mechrevo-fan" ]; then
+    elif [ -f "/run/mechrevo-fan" ] || [ -f "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/mechrevo-fan" ]; then
         local duty
-        duty="$(cat "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/mechrevo-fan" 2>/dev/null)"
+        duty="$(cat "/run/mechrevo-fan" 2>/dev/null)"
+        [ -z "$duty" ] && duty="$(cat "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/mechrevo-fan" 2>/dev/null)"
         [ -n "$duty" ] && speed="${duty}/15"
         case "$duty" in
             0)   icon="󱜝" ;; # off

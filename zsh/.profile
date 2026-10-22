@@ -48,7 +48,10 @@ export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
 export QT_QPA_PLATFORMTHEME=qt5ct
 export WLR_NO_HARDWARE_CURSORS=1
 export WLR_RENDERER_ALLOW_SOFTWARE=1
-export QTWEBENGINE_CHROMIUM_FLAGS='--disable-gpu'
+# 原先这里有 export QTWEBENGINE_CHROMIUM_FLAGS='--disable-gpu'
+# 该方式会覆盖 qutebrowser 自己的 flag 处理(含其崩溃 workaround)，qutebrowser 会告警。
+# 已改为在 qutebrowser 的 config.py 里用 c.qt.force_software_rendering='chromium' +
+# c.qt.args 实现。参见 dotfiles/qutebrowser/.config/qutebrowser/config.py
 export SDL_VIDEODRIVER=wayland
 export _JAVA_AWT_WM_NONEREPARENTING=1
 export GDK_BACKEND="wayland,x11"

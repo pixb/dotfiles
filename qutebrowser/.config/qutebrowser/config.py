@@ -5,6 +5,47 @@
 
 c.zoom.default = 120
 
+# ---------------------------------------------------------------------------
+# Chromium 渲染路径：软件光栅化（不要动这块，除非你有把握）
+#
+# 本机是 机械革命 极光X (i7-12800HX + RTX 4070 Laptop)，混合显卡：
+#   - 内屏 eDP-1 -> Intel i915 (card1)
+#   - 外接 HDMI-A-1 -> NVIDIA (card0)，当前是唯一启用的输出
+#   - EGL 默认 vendor 是 NVIDIA (/usr/share/glvnd/egl_vendor.d/10_nvidia.json)
+#   - Vulkan 只有 NVIDIA 一个 ICD，没有 intel-vulkan-driver
+#
+# 为什么必须软件光栅化（2026-10-22 实测结论）：
+#
+# 1) Qt 6.12 的 wayland 平台插件不提供 DRM 集成 => QtWebEngine 判定
+#    "GBM is not supported with the current configuration"，
+#    然后强制给 Chromium 加 --enable-features=Vulkan，
+#    即：qutebrowser 在本机只能走 Vulkan 或软件，没有 GL 这条路。
+#    (换成 QT_QPA_PLATFORM=xcb 也没用，GBM 判定依旧失败)
+#
+# 2) nvidia-open 615.78.08 在这台机器上读不到 SBIOS 的平台温度/功耗模式
+#    (NVRM: "failed to get target temp from SBIOS" / "failed to get platform
+#    power mode from SBIOS")，走 Vulkan 初始化 NVIDIA 时会挂死整机。
+#    实测: 2026-10-22 21:55 打开带 GPU 的 qutebrowser => GPU 进程 SIGSEGV
+#    (栈里有 libnvidia-glcore.so.615.78.08) => 整机卡死，只能强制重启。
+#
+# 3) 只禁 Vulkan 而不禁 GPU (即"保留硬件加速") => Chromium 没有可用后端，
+#    GPU 进程直接 SIGSEGV (libgallium + libnvidia-glcore 混合栈)。
+#
+# 所以：--disable-gpu + 禁用 Vulkan 是本机唯一实测稳定的组合。
+# 想让 qutebrowser 有硬件加速，只能换用 Chromium/Firefox 原生版
+# (它们不走 Qt 的 GBM/Vulkan 强制逻辑)。
+#
+# 注意: 这里不要写前导 "--"。qutebrowser 会给每个 c.qt.args 条目自动加 "--"，
+# 写成 "--disable-features=..." 会变成 "----disable-features=..."(无效)。
+# 而 'disable-features=...' 这种写法会被 qutebrowser 识别为 special flag，
+# 与它自己的 --disable-features 合并成一条，不会互相覆盖。
+# ---------------------------------------------------------------------------
+c.qt.force_software_rendering = 'chromium'
+c.qt.args = [
+    'disable-gpu-compositing',
+    'disable-features=Vulkan,WebGPU',
+]
+
 config.source('proxy.py')
 config.source('colors.py')
 config.source('bindings.py')
