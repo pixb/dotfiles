@@ -9,6 +9,12 @@ COLOR_NC='\033[0m'
 # === handing failures and errors. ===
 set -euo pipefail
 
+# === require interactive terminal ===
+if [ ! -t 0 ]; then
+  echo "需要交互式终端" >&2
+  exit 1
+fi
+
 # === Time ===
 TIME="$(date +%Y-%m-%d_%H-%M-%S)"
 # === File Variable ===
@@ -66,13 +72,14 @@ fi
 
 # === CPU type ===
 CPU="Intel"
-if grep -qi AMD /proc/cpuinfo; then
+if grep -qi '^vendor_id.*AMD' /proc/cpuinfo; then
   echo "AMD CPU"
   CPU="AMD"
-fi
-
-if grep -qi Intel /proc/cpuinfo; then
+elif grep -qi '^vendor_id.*Intel' /proc/cpuinfo; then
   echo "Intel CPU"
+  CPU="Intel"
+else
+  echo "Unknown CPU vendor, defaulting to Intel" >&2
   CPU="Intel"
 fi
 
@@ -80,7 +87,7 @@ pacman_install base
 pacman_install base-devel binutils debugedit git
 pacman_install zip unzip vim wget linux-headers
 
-if [ ${CPU} = "Intel" ]; then
+if [ "$CPU" = "Intel" ]; then
   echo -e "${COLOR_GREEN}Install intel-ucode${COLOR_NC}"
   pacman_install intel-ucode
 else
@@ -91,15 +98,9 @@ fi
 pacman_install tree man linux neovim networkmanager
 pacman_install net-tools wpa_supplicant zsh sudo
 
-if [ -e /etc/localtime ]; then
-  echo -e "${COLOR_GREEN}/etc/localtime is exists${COLOR_NC}"
-else
-  echo -e "${COLOR_YELLOW}/etc/localtime is not exists${COLOR_NC}"
-  ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-fi
-
-hwclock --systohc
-timedatectl set-timezone Asia/Shanghai
+ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+timedatectl set-timezone Asia/Shanghai 2>/dev/null || true
+hwclock --systohc || true
 locale_file="/etc/locale.gen"
 # check locale file
 if [ -f "$locale_file" ]; then
@@ -184,8 +185,6 @@ if [ ! -d /boot/grub ]; then
 fi
 
 if [ "$BOOT_MODE" = "uefi" ]; then
-  # 清理旧的 GRUB EFI 启动项（避免重复）
-  efibootmgr 2>/dev/null | grep -qi arch && efibootmgr -B -b $(efibootmgr | grep -i arch | head -1 | cut -c5-8) 2>/dev/null || true
   # 验证 /boot 是否为 FAT32 文件系统（EFI 分区要求）
   BOOT_FS=$(findmnt -n -o FSTYPE /boot 2>/dev/null || true)
   if [ "$BOOT_FS" != "vfat" ]; then
