@@ -245,7 +245,7 @@ if command -v uv &>/dev/null; then
   echo_is_existed "uv"
 else
   echo_not_found "uv"
-  curl -LsSf https://astral.sh/uv/install.sh | sh
+  UV_NO_MODIFY_PATH=1 curl -LsSf https://astral.sh/uv/install.sh | sh
   export PATH="$HOME/.local/bin:$PATH"
 fi
 

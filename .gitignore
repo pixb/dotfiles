@@ -40,3 +40,8 @@ mus/*
 # newsboat local config (copied from *.example by arch_install_user.sh)
 newsboat/.config/newsboat/urls
 newsboat/.config/newsboat/proxy.conf
+
+# Local runtime data (created by stow --no-folding .local package)
+zsh/.local/bin/
+zsh/.local/share/
+zsh/.local/state/
