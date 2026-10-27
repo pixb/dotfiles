@@ -124,6 +124,10 @@ c.content.blocking.adblock.lists = [
 
 # privacy
 c.content.canvas_reading = False # breaks some sites, see `zcr` in `bindings.py`
+
+# Cloudflare Turnstile needs canvas reading
+config.set('content.canvas_reading', True, '*://*.clerkprod-cloudflare.net/*')
+config.set('content.canvas_reading', True, '*://*.openrouter.ai/*')
 c.content.geolocation = False
 c.content.webrtc_ip_handling_policy = "default-public-interface-only"
 c.completion.open_categories = ['filesystem']

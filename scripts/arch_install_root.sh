@@ -18,7 +18,7 @@ FILE_NAME="${SCRIPT_NAME%.*}"
 
 # === General function definition ===
 pacman_install_noconfirm() {
-  pacman -S "$1" --noconfirm --needed
+  pacman -S "$@" --noconfirm --needed
 }
 
 echo_not_found() {
@@ -59,21 +59,24 @@ pacman_install() {
 }
 
 # === key init update.===
-pacman-key --init
-pacman-key --populate archlinux
+if ! pacman-key --list-keys archlinux >/dev/null 2>&1; then
+  pacman-key --init
+  pacman-key --populate archlinux
+fi
 
 # === CPU type ===
 CPU="Intel"
-if grep -q AMD /proc/cpuinfo; then
+if grep -qi AMD /proc/cpuinfo; then
   echo "AMD CPU"
   CPU="AMD"
 fi
 
-if grep -q Intel /proc/cpuinfo; then
+if grep -qi Intel /proc/cpuinfo; then
   echo "Intel CPU"
   CPU="Intel"
 fi
 
+pacman_install base
 pacman_install base-devel binutils debugedit git
 pacman_install zip unzip vim wget linux-headers
 
@@ -96,6 +99,7 @@ else
 fi
 
 hwclock --systohc
+timedatectl set-timezone Asia/Shanghai
 locale_file="/etc/locale.gen"
 # check locale file
 if [ -f "$locale_file" ]; then
@@ -110,33 +114,38 @@ fi
 locale-gen
 echo LANG=en_US.UTF-8 >/etc/locale.conf
 
-if [ ! -f /etc/hostname ]; then
-  echo -e "${COLOR_GREEN}Plase input hostname:${COLOR_NC}"
+if [ ! -f /etc/hostname ] || [ ! -s /etc/hostname ]; then
+  echo -e "${COLOR_GREEN}Please input hostname:${COLOR_NC}"
   read -r HOST_NAME
-  echo "${HOST_NAME}"
-  echo "${HOST_NAME}" >>/etc/hostname
-  cat <<EOF >/etc/hosts
-  127.0.0.1       localhost
-  ::1             localhost
-  127.0.1.1       ${HOST_NAME}.localdomain ${HOST_NAME}
+  if [ -z "${HOST_NAME}" ]; then
+    echo -e "${COLOR_RED}Error: hostname cannot be empty${COLOR_NC}" >&2
+    exit 1
+  fi
+  echo "${HOST_NAME}" >/etc/hostname
+  cat >/etc/hosts <<EOF
+127.0.0.1       localhost
+::1             localhost
+127.0.1.1       ${HOST_NAME}.localdomain ${HOST_NAME}
 EOF
 fi
 
 systemctl enable NetworkManager.service
-echo -e "${COLOR_GREEN}Input root password${COLOR_NC}"
-passwd
-echo -e "${COLOR_GREEN}Plase input username:${COLOR_NC}"
+if [ "${SKIP_ROOT_PASSWD:-0}" != "1" ]; then
+  echo -e "${COLOR_GREEN}Input root password${COLOR_NC}"
+  passwd
+fi
+echo -e "${COLOR_GREEN}Please input username:${COLOR_NC}"
 read -r USER_NAME
 if id "${USER_NAME}" &>/dev/null; then
   echo -e "${COLOR_GREEN}${USER_NAME} is exists${COLOR_NC}"
 else
-  useradd --create-home --groups wheel,root --shell /bin/zsh "${USER_NAME}"
+  useradd --create-home --groups wheel --shell /bin/zsh "${USER_NAME}"
   echo -e "${COLOR_GREEN}Input ${USER_NAME} password${COLOR_NC}"
   passwd "${USER_NAME}"
 fi
 
 # sed -i 's/# *\(%wheel.*NOPASSWD: ALL\)/\1/' /etc/sudoers
-sed -i '/%wheel ALL=(ALL:ALL) ALL/s/^# //p' /etc/sudoers
+sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 
 # 自动检测引导模式
 if [ -d /sys/firmware/efi ]; then
@@ -149,7 +158,10 @@ fi
 echo -e "${COLOR_GREEN}可用磁盘列表：${COLOR_NC}"
 lsblk -dpno NAME,SIZE,MODEL
 echo ""
-read -r -p "请输入目标磁盘（如 /dev/sda）: " TARGET_DISK
+TARGET_DISK="${TARGET_DISK:-}"
+if [ -z "$TARGET_DISK" ]; then
+  read -r -p "请输入目标磁盘（如 /dev/sda）: " TARGET_DISK
+fi
 
 if [ -z "$TARGET_DISK" ]; then
   echo -e "${COLOR_RED}错误：未指定目标磁盘${COLOR_NC}" >&2
@@ -172,6 +184,8 @@ if [ ! -d /boot/grub ]; then
 fi
 
 if [ "$BOOT_MODE" = "uefi" ]; then
+  # 清理旧的 GRUB EFI 启动项（避免重复）
+  efibootmgr 2>/dev/null | grep -qi arch && efibootmgr -B -b $(efibootmgr | grep -i arch | head -1 | cut -c5-8) 2>/dev/null || true
   # 验证 /boot 是否为 FAT32 文件系统（EFI 分区要求）
   BOOT_FS=$(findmnt -n -o FSTYPE /boot 2>/dev/null || true)
   if [ "$BOOT_FS" != "vfat" ]; then
