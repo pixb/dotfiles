@@ -496,6 +496,9 @@ systemctl_enable nmb
 systemctl_start nmb
 
 aur_install herdr-bin
+
+stow -t ~ herdr
+
 npm install -g --allow-scripts=opencode-ai opencode-ai || true
 
 # === pi agent ===
