@@ -201,7 +201,7 @@ pacman_install neovim openssh tk fzf the_silver_searcher
 pacman_install tmux go ripgrep lazygit imagemagick highlight
 pacman_install p7zip rsync cifs-utils smbclient stow
 pacman_install brightnessctl wob pacman-contrib
-pacman_install neomutt isync
+pacman_install neomutt isync eza
 
 # === pgloader (PostgreSQL migration CLI, AUR; builds from Common Lisp source) ===
 aur_install pgloader
