@@ -2,6 +2,9 @@ onboarding = false
 
 [terminal]
 kitty_graphics = true
+# Pane 发出的 Sixel: auto 即 relay(解码为 RGBA,以合成 Kitty 送外层)。
+# 强制开/关可用 on/off;透传(直接转发给支持 Sixel 的外层)尚未实现。
+sixel = "auto"
 
 [ui.toast]
 delivery = "herdr"
