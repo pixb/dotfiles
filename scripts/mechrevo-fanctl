@@ -1,0 +1,50 @@
+#!/usr/bin/sh
+# mechrevo-fanctl: aggressive fan curve for MECHREVO (Uniwill EC, duty 0-200)
+#
+# Runs as root every minute from /etc/cron.d/fanmode. Reads the CPU package
+# temperature, picks a duty band and writes it through /usr/local/bin/mechrevo-fan.
+# Needs fan control for itself: tccd.service must be stopped, otherwise the EC
+# auto table (TCC "Auto") overwrites the duty within seconds.
+#
+# Writes the raw duty to the damblocks cache and signals damblocks (RTMIN+13).
+
+FAN="/usr/local/bin/mechrevo-fan"
+FAN_UID=$(id -u pix)
+CACHE="/run/user/${FAN_UID}/mechrevo-fan"
+DAMBLOCKS_PID="/run/user/${FAN_UID}/damblocks.pid"
+STATE="/run/user/${FAN_UID}/mechrevo-fan-band"
+TZONE="/sys/class/thermal/thermal_zone0/temp"
+HYST=3
+
+DUTIES="1 50 90 130 170 200"
+LIMITS="50 60 70 80 90 1000"
+
+temp="$(sed 's/000$//' "$TZONE" 2>/dev/null)"
+case "$temp" in ''|*[!0-9]*) exit 0 ;; esac
+
+band=5
+i=0
+for lim in $LIMITS; do
+    if [ "$temp" -le "$lim" ]; then band=$i; break; fi
+    i=$((i + 1))
+done
+
+prev="$(cat "$STATE" 2>/dev/null)"
+case "$prev" in ''|*[!0-9]*) prev=0 ;; esac
+
+if [ "$band" -ge "$prev" ]; then
+    new=$band
+else
+    set -- $LIMITS
+    low="$(eval "echo \${$((prev + 1))}")"
+    if [ "$temp" -le "$((low - HYST))" ]; then new=$band; else new=$prev; fi
+fi
+
+duty="$(echo "$DUTIES" | cut -d' ' -f"$((new + 1))")"
+$FAN w "$duty" >/dev/null 2>&1 || exit 0
+
+echo "$new" > "$STATE"
+echo "$duty $duty" > "$CACHE"
+
+[ -f "$DAMBLOCKS_PID" ] && kill -47 $(pgrep -x damblocks -u "$FAN_UID") 2>/dev/null
+exit 0
