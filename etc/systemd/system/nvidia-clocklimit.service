@@ -1,0 +1,22 @@
+[Unit]
+Description=Lock NVIDIA GPU clocks for thermal relief
+After=multi-user.target
+ConditionPathExists=/dev/nvidia0
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# persistence mode 让驱动常驻, 锁频不会因为 GPU 卸载而失效
+ExecStartPre=/usr/bin/nvidia-smi -pm 1
+# 这台机器 (RTX 4070 Laptop / AD106M, 默认 TGP 115W, ceiling 140W) 的 TGP 由
+# Uniwill EC / vBIOS 掌控, NVML 改不动:
+#   nvidia-smi -pl 90  ->  "Changing power management limit is not supported"
+# EC 侧 /sys/devices/platform/tuxedo_nvidia_power_ctrl/ctgp_offset 只接受 0..31
+# 的"正向"偏移(只能加 TGP), 所以降功耗只能锁频率。
+# SM: max 3105 MHz -> 1400 MHz ; 显存: max 8001 MHz -> 6001 MHz
+ExecStart=/usr/bin/nvidia-smi -lgc 210,1400
+ExecStart=/usr/bin/nvidia-smi -lmc 6001
+ExecStartPost=/usr/bin/nvidia-smi --query-gpu=clocks.sm,clocks.mem --format=csv,noheader
+
+[Install]
+WantedBy=multi-user.target

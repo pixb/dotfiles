@@ -11,6 +11,7 @@
 #   /usr/local/bin/mechrevo-fanctl 风扇曲线执行器 (多源温度取最大值)
 #   /etc/systemd/system/mechrevo-fanctl.{service,timer}  每 10 秒一拍
 #     (旧的 /etc/cron.d/fanmode 每分钟一拍会被删除: 两处同时写占空比会互相打架)
+#   /etc/systemd/system/nvidia-clocklimit.service  GPU 锁频 (本机 TGP 不可写)
 # 停用:
 #   tccd.service (Tuxedo Control Center) —— 它的 Auto 模式会在几秒内把
 #   mechrevo-fanctl 写入的占空比拽回 EC 内置曲线，风扇控制权只能有一个。
@@ -125,6 +126,17 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now mechrevo-fanctl.timer
 info "mechrevo-fanctl.timer 已启用 (每 10 秒一拍)"
 
+# GPU 锁频 (TGP 在这台机器上不可写: nvidia-smi -pl 被拒, EC ctgp_offset 只接受正向偏移)
+if command -v nvidia-smi >/dev/null 2>&1; then
+  if [ -f "${DOTFILES_DIR}/etc/systemd/system/nvidia-clocklimit.service" ]; then
+    sudo cp "${DOTFILES_DIR}/etc/systemd/system/nvidia-clocklimit.service" /etc/systemd/system/
+    sudo chmod 644 /etc/systemd/system/nvidia-clocklimit.service
+    sudo systemctl daemon-reload
+    sudo systemctl enable --now nvidia-clocklimit.service
+    info "nvidia-clocklimit.service 已启用 (SM 210-1400MHz / 显存 6001MHz)"
+  fi
+fi
+
 # tccd 的 Auto 会覆盖脚本写入的占空比
 if systemctl list-unit-files --no-pager 2>/dev/null | grep -q '^tccd.service'; then
   sudo systemctl disable --now tccd.service 2>/dev/null || true
@@ -144,5 +156,6 @@ cat <<'EOF'
   sudo /usr/local/bin/mechrevo-fan a        # 交回 EC 自动 (需重新启用 tccd)
 
 改曲线: 编辑 /usr/local/bin/mechrevo-fanctl 顶部的 DUTIES / LIMITS
+改锁频: 编辑 /etc/systemd/system/nvidia-clocklimit.service 里的 -lgc / -lmc 数值
 回退 TCC: sudo systemctl enable --now tccd.service && sudo /usr/local/bin/mechrevo-fan a
 EOF
