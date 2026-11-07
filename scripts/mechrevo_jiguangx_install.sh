@@ -8,8 +8,9 @@
 # 安装内容:
 #   dkms + linux-headers + mechrevo-drivers-dkms  (tuxedo_io / 键盘 / WMI 驱动)
 #   /usr/local/bin/mechrevo-fan    读/写风扇占空比 (mechrevo-fan.c 编译)
-#   /usr/local/bin/mechrevo-fanctl 风扇曲线执行器 (cron 每分钟)
-#   /etc/cron.d/fanmode            '* * * * * root /usr/local/bin/mechrevo-fanctl'
+#   /usr/local/bin/mechrevo-fanctl 风扇曲线执行器 (多源温度取最大值)
+#   /etc/systemd/system/mechrevo-fanctl.{service,timer}  每 10 秒一拍
+#     (旧的 /etc/cron.d/fanmode 每分钟一拍会被删除: 两处同时写占空比会互相打架)
 # 停用:
 #   tccd.service (Tuxedo Control Center) —— 它的 Auto 模式会在几秒内把
 #   mechrevo-fanctl 写入的占空比拽回 EC 内置曲线，风扇控制权只能有一个。
@@ -94,17 +95,35 @@ else
   exit 1
 fi
 
-# === Fan curve runner + cron ===
+# === Fan curve runner + systemd timer ===
+DOTFILES_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 if [ -f "${SCRIPT_DIR}/mechrevo-fanctl" ]; then
   sudo cp "${SCRIPT_DIR}/mechrevo-fanctl" /usr/local/bin/mechrevo-fanctl
   sudo chmod 755 /usr/local/bin/mechrevo-fanctl
-  echo '* * * * * root /usr/local/bin/mechrevo-fanctl' | sudo tee /etc/cron.d/fanmode >/dev/null
-  sudo chmod 644 /etc/cron.d/fanmode
-  info "/usr/local/bin/mechrevo-fanctl + /etc/cron.d/fanmode"
+  info "/usr/local/bin/mechrevo-fanctl"
 else
   warn "mechrevo-fanctl 不存在，跳过曲线安装"
   exit 1
 fi
+
+for unit in mechrevo-fanctl.service mechrevo-fanctl.timer; do
+  if [ -f "${DOTFILES_DIR}/etc/systemd/system/${unit}" ]; then
+    sudo cp "${DOTFILES_DIR}/etc/systemd/system/${unit}" "/etc/systemd/system/${unit}"
+    sudo chmod 644 "/etc/systemd/system/${unit}"
+  else
+    warn "etc/systemd/system/${unit} 不存在，跳过"
+  fi
+done
+
+# 旧的 cron 一拍必须撤掉: 曲线只能有一个写入者
+if [ -f /etc/cron.d/fanmode ]; then
+  sudo rm -f /etc/cron.d/fanmode
+  info "/etc/cron.d/fanmode 已删除 (改由 systemd timer 驱动)"
+fi
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now mechrevo-fanctl.timer
+info "mechrevo-fanctl.timer 已启用 (每 10 秒一拍)"
 
 # tccd 的 Auto 会覆盖脚本写入的占空比
 if systemctl list-unit-files --no-pager 2>/dev/null | grep -q '^tccd.service'; then

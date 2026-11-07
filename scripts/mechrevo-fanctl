@@ -1,50 +1,230 @@
 #!/usr/bin/sh
-# mechrevo-fanctl: aggressive fan curve for MECHREVO (Uniwill EC, duty 0-200)
+# mechrevo-fanctl: 多源温度驱动的激进风扇曲线 (MECHREVO / Uniwill EC, duty 0-200)
 #
-# Runs as root every minute from /etc/cron.d/fanmode. Reads the CPU package
-# temperature, picks a duty band and writes it through /usr/local/bin/mechrevo-fan.
-# Needs fan control for itself: tccd.service must be stopped, otherwise the EC
-# auto table (TCC "Auto") overwrites the duty within seconds.
+# 旧版只读 thermal_zone0。这台机器上 thermal_zone0 = acpitz / ECTZ（EC 机箱热区），
+# 是反应最慢的传感器；CPU 封装温度在 coretemp，GPU/显存/内存条/NVMe/WiFi 全部没参与。
+# 结果：ComfyUI 出图时 ECTZ 几乎不动 → 风扇停在 duty 1（实测 fan1=0/200 fan2=0/200，
+# 完全停转），而内存条 SPD5118 已越过 55°C 报警线。热量全闷在机身里。
 #
-# Writes the raw duty to the damblocks cache and signals damblocks (RTMIN+13).
+# 新版规则:
+#   决策温度 T = max(CPU封装, GPU, 内存条 x2, NVMe x2(Composite), WiFi, EC机箱热区, EC风扇温度)
+#   基础曲线见 DUTIES / LIMITS；另有内存条/GPU/NVMe 的单独强制下限
+#   永不停转: 接电源下限 60 (30%)，电池下限 50 (25%)
+#   升档立即；降档每次只降一档，且需连续 DOWN_TICKS 拍(10s/拍 => 2 分钟)温度确实落下
+#
+# 调度: systemd timer 每 10 秒一拍 (取代旧的 /etc/cron.d/fanmode 每分钟)
+# 每拍写一行 journal (tag=mechrevo-fanctl)；硬死机后 `journalctl -t mechrevo-fanctl -n 20`
+# 就是冻结前最后的温度快照。
+#
+# 前置: tccd.service 必须停用（它的 Auto 表会在几秒内覆盖写入的占空比）
+# 每拍写 damblocks 缓存并 kill -47 (RTMIN+13) 以更新状态栏显示
 
 FAN="/usr/local/bin/mechrevo-fan"
-FAN_UID=$(id -u pix)
+FAN_UID=$(id -u pix 2>/dev/null || echo 1000)
 CACHE="/run/user/${FAN_UID}/mechrevo-fan"
 DAMBLOCKS_PID="/run/user/${FAN_UID}/damblocks.pid"
 STATE="/run/user/${FAN_UID}/mechrevo-fan-band"
-TZONE="/sys/class/thermal/thermal_zone0/temp"
-HYST=3
+COOLDOWN="/run/user/${FAN_UID}/mechrevo-fan-cooldown"
 
-DUTIES="1 50 90 130 170 200"
-LIMITS="50 60 70 80 90 1000"
+# 基础曲线: 决策温度 T(°C) -> 占空比 (0-200)
+DUTIES="60 80 110 140 170 190 200"
+LIMITS="40 48 55 62 70 78 1000"
 
-temp="$(sed 's/000$//' "$TZONE" 2>/dev/null)"
-case "$temp" in ''|*[!0-9]*) exit 0 ;; esac
+HYST=4              # 降档需要比目标档上限再低这么多
+DOWN_TICKS=12       # 连续多少拍才允许降一档 (10s/拍 => 2 分钟)
+FLOOR_AC=60         # 接电源时的占空比下限 (30%)
+FLOOR_BAT=50        # 电池时的占空比下限 (25%)
 
-band=5
+# === 工具 ===
+int_ok() { case "$1" in ''|*[!0-9]*) return 1 ;; *) return 0 ;; esac; }
+
+# 读一个 hwmon 目录里最大的那个温度 (毫度 -> 度)
+hwmon_max() {
+    _d="$1"
+    _m=""
+    for _t in "$_d"/temp*_input; do
+        [ -r "$_t" ] || continue
+        _v="$(cat "$_t" 2>/dev/null)"
+        _v="${_v%.*}"
+        int_ok "$_v" || continue
+        _v=$((_v / 1000))
+        [ -z "$_m" ] && _m="$_v"
+        [ "$_v" -gt "$_m" ] && _m="$_v"
+    done
+    [ -n "$_m" ] && printf '%s' "$_m"
+}
+
+# 按 hwmon 的 name 收集所有温度
+temps_of() {
+    _want="$1"
+    _out=""
+    for _h in /sys/class/hwmon/hwmon*; do
+        [ -r "$_h/name" ] || continue
+        [ "$(cat "$_h/name" 2>/dev/null)" = "$_want" ] || continue
+        _t="$(hwmon_max "$_h")"
+        [ -n "$_t" ] && _out="$_out $_t"
+    done
+    printf '%s' "$_out"
+}
+
+# 只取 hwmon 的 temp1 (NVMe 的 temp1 = 规范里的 Composite Temperature)。
+# temp2/temp3 是厂商自定义通道，常见常量/乱报（实测 Kingston nvme0 composite 37℃
+# 而 Sensor2 报 71℃），拿它驱动风扇会把风扇钉死在高位。
+temps_first() {
+    _want="$1"
+    _out=""
+    for _h in /sys/class/hwmon/hwmon*; do
+        [ -r "$_h/name" ] || continue
+        [ "$(cat "$_h/name" 2>/dev/null)" = "$_want" ] || continue
+        [ -r "$_h/temp1_input" ] || continue
+        _v="$(cat "$_h/temp1_input" 2>/dev/null)"; _v="${_v%.*}"
+        int_ok "$_v" || continue
+        _out="$_out $((_v / 1000))"
+    done
+    printf '%s' "$_out"
+}
+
+max_of() {
+    _m=""
+    for _v in $1; do
+        int_ok "$_v" || continue
+        [ -z "$_m" ] && _m="$_v"
+        [ "$_v" -gt "$_m" ] && _m="$_v"
+    done
+    [ -n "$_m" ] && printf '%s' "$_m"
+}
+
+# === 采集 ===
+AC=0
+[ "$(cat /sys/class/power_supply/AC0/online 2>/dev/null)" = "1" ] && AC=1
+FLOOR=$FLOOR_BAT
+[ "$AC" = "1" ] && FLOOR=$FLOOR_AC
+
+cpu="$(temps_of coretemp)"          # 封装 + 各核
+dimm="$(temps_of spd5118)"          # 内存条 (DDR5 SPD 温度传感器, 报警线 55°C)
+nvme="$(temps_first nvme)"          # 两块 SSD (只取 Composite)
+wifi="$(cat /sys/class/thermal/thermal_zone3/temp 2>/dev/null)"; wifi="${wifi%???}"
+int_ok "$wifi" || wifi=""
+ectz="$(cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null)"; ectz="${ectz%???}"
+int_ok "$ectz" || ectz=""
+
+# GPU 温度: 这台机器 nvidia 未注册 hwmon，只能走 nvidia-smi
+gpu=""
+ecfan=""
+if [ -x /usr/bin/nvidia-smi ]; then
+    gpu="$(/usr/bin/nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader,nounits 2>/dev/null | head -1)"
+    gpu="$(printf '%s' "$gpu" | tr -d ' ')"
+    int_ok "$gpu" || gpu=""
+fi
+if [ -x "$FAN" ]; then
+    ecfan="$("$FAN" -v 2>&1 >/dev/null | sed -n 's/.*fan_temp=\([0-9]*\).*/\1/p' | head -1)"
+    int_ok "$ecfan" || ecfan=""
+fi
+
+cpu_max="$(max_of "$cpu")"
+dimm_max="$(max_of "$dimm")"
+nvme_max="$(max_of "$nvme")"
+
+# 决策温度 = 所有热源的最大值
+T="$(max_of "$cpu_max $gpu $dimm_max $nvme_max $wifi $ectz $ecfan")"
+if ! int_ok "$T"; then
+    logger -t mechrevo-fanctl "skip: 无有效温度 (cpu='$cpu_max' gpu='$gpu' dimm='$dimm_max' nvme='$nvme_max')"
+    exit 0
+fi
+
+# === 基础曲线 -> 档位 / 目标占空比 ===
+band=6
 i=0
 for lim in $LIMITS; do
-    if [ "$temp" -le "$lim" ]; then band=$i; break; fi
+    if [ "$T" -le "$lim" ]; then band=$i; break; fi
+    i=$((i + 1))
+done
+duty="$(echo "$DUTIES" | cut -d' ' -f"$((band + 1))")"
+
+# === 强制下限: 内存条 (最要紧, 55°C 就报警) ===
+if int_ok "$dimm_max"; then
+    [ "$dimm_max" -ge 52 ] && [ "$duty" -lt 110 ] && duty=110
+    [ "$dimm_max" -ge 56 ] && [ "$duty" -lt 150 ] && duty=150
+    [ "$dimm_max" -ge 60 ] && duty=200
+fi
+# === 强制下限: GPU / 显存 (显存温度读不到, 用 GPU 温度做代理) ===
+if int_ok "$gpu"; then
+    [ "$gpu" -ge 75 ] && [ "$duty" -lt 150 ] && duty=150
+    [ "$gpu" -ge 82 ] && [ "$duty" -lt 190 ] && duty=190
+    [ "$gpu" -ge 88 ] && duty=200
+fi
+# === 强制下限: SSD ===
+if int_ok "$nvme_max"; then
+    [ "$nvme_max" -ge 65 ] && [ "$duty" -lt 150 ] && duty=150
+    [ "$nvme_max" -ge 72 ] && duty=200
+fi
+# === 永不停转 ===
+[ "$duty" -lt "$FLOOR" ] && duty=$FLOOR
+
+# === 迟滞: 升档立即; 降档每次只降一档, 且需连续 DOWN_TICKS 拍 ===
+# STATE 存的是"已生效的占空比"(不是档位索引), 比较全在占空比空间做
+prev="$(cat "$STATE" 2>/dev/null)"
+int_ok "$prev" || prev=$FLOOR
+
+# prev 落在哪一档: 第一个 >= prev 的 DUTY 的下标 (0-based)
+prev_band=0
+i=0
+for d in $DUTIES; do
+    if [ "$d" -ge "$prev" ]; then prev_band=$i; break; fi
     i=$((i + 1))
 done
 
-prev="$(cat "$STATE" 2>/dev/null)"
-case "$prev" in ''|*[!0-9]*) prev=0 ;; esac
+cnt="$(cat "$COOLDOWN" 2>/dev/null)"
+int_ok "$cnt" || cnt=0
 
-if [ "$band" -ge "$prev" ]; then
-    new=$band
+if [ "$duty" -ge "$prev" ]; then
+    # 升温 / 强制下限抬高: 立即拉高, 并清空降档计数
+    new=$duty
+    echo 0 > "$COOLDOWN"
+elif [ "$duty" = "$prev" ]; then
+    new=$duty
+    echo 0 > "$COOLDOWN"
+elif [ "$prev_band" -le 0 ]; then
+    # 已在最低档: 没有更低档可降 (字段号 0 是 $0, 绝不能拿去 eval)
+    new=$FLOOR
+    echo 0 > "$COOLDOWN"
 else
+    # 只降一档: 前一档的占空比与温度上限都在字段号 prev_band (DUTIES/LIMITS 字段一致)
+    set -- $DUTIES
+    lower_duty="$(eval "echo \${$prev_band}")"
     set -- $LIMITS
-    low="$(eval "echo \${$((prev + 1))}")"
-    if [ "$temp" -le "$((low - HYST))" ]; then new=$band; else new=$prev; fi
+    lower_limit="$(eval "echo \${$prev_band}")"
+    int_ok "$lower_duty" || lower_duty=$FLOOR
+    int_ok "$lower_limit" || lower_limit=1000
+    [ "$lower_duty" -lt "$FLOOR" ] && lower_duty=$FLOOR
+
+    if [ "$T" -le "$((lower_limit - HYST))" ]; then
+        cnt=$((cnt + 1))
+    else
+        cnt=0
+    fi
+
+    if [ "$cnt" -ge "$DOWN_TICKS" ]; then
+        new=$lower_duty
+        cnt=0
+    else
+        new=$prev
+    fi
+    echo "$cnt" > "$COOLDOWN"
 fi
 
-duty="$(echo "$DUTIES" | cut -d' ' -f"$((new + 1))")"
-$FAN w "$duty" >/dev/null 2>&1 || exit 0
+# 兜底: 绝不低于下限
+[ "$new" -lt "$FLOOR" ] && new=$FLOOR
+
+# === 写入 EC ===
+if ! "$FAN" w "$new" >/dev/null 2>&1; then
+    logger -t mechrevo-fanctl "ERROR: 写占空比失败 duty=$new (tuxedo_io/EC?)"
+    exit 1
+fi
 
 echo "$new" > "$STATE"
-echo "$duty $duty" > "$CACHE"
+echo "$new $new" > "$CACHE" 2>/dev/null
+[ -f "$DAMBLOCKS_PID" ] && kill -47 "$(pgrep -x damblocks -u "$FAN_UID")" 2>/dev/null
 
-[ -f "$DAMBLOCKS_PID" ] && kill -47 $(pgrep -x damblocks -u "$FAN_UID") 2>/dev/null
+logger -t mechrevo-fanctl "T=$T duty=$new band=$band cpu=${cpu_max:-?} gpu=${gpu:-?} dimm=${dimm_max:-?} nvme=${nvme_max:-?} wifi=${wifi:-?} ectz=${ectz:-?} ecfan=${ecfan:-?} ac=$AC"
 exit 0

@@ -1,0 +1,13 @@
+[Unit]
+Description=每 10 秒跑一次 MECHREVO 风扇曲线
+Requires=mechrevo-fanctl.service
+
+[Timer]
+OnBootSec=15
+OnUnitActiveSec=10
+AccuracySec=1s
+RandomizedDelaySec=0
+Unit=mechrevo-fanctl.service
+
+[Install]
+WantedBy=timers.target

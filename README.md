@@ -73,28 +73,64 @@ bash scripts/mechrevo_jiguangx_install.sh
 ```
 
 脚本只在 `sys_vendor = MECHREVO` 时执行，会装 `dkms`/`linux-headers`/`mechrevo-drivers-dkms`、
-编译风扇工具、装 cron，并停用 `tccd.service`（TCC 的 Auto 会在几秒内覆盖脚本写入的占空比，
+编译风扇工具、装 systemd timer，并停用 `tccd.service`（TCC 的 Auto 会在几秒内覆盖脚本写入的占空比，
 风扇控制权只能有一个）。
 
 | 组件 | 说明 |
 |------|------|
 | `scripts/mechrevo-fan.c` | 读/写风扇占空比，装到 `/usr/local/bin/mechrevo-fan` |
-| `scripts/mechrevo-fanctl` | 曲线执行器，装到 `/usr/local/bin/mechrevo-fanctl` |
-| `/etc/cron.d/fanmode` | `* * * * * root /usr/local/bin/mechrevo-fanctl` |
+| `scripts/mechrevo-fanctl` | 曲线执行器（多源温度取最大值），装到 `/usr/local/bin/mechrevo-fanctl` |
+| `etc/systemd/system/mechrevo-fanctl.service` | 一拍执行一次 |
+| `etc/systemd/system/mechrevo-fanctl.timer` | 每 10 秒一拍（取代旧 `/etc/cron.d/fanmode` 每分钟） |
 | `/run/user/1000/mechrevo-fan` | 占空比缓存，`damblocks` 状态栏读取显示 |
 | `damblocks` 的 `update_fanmode()` | 图标：0=󱜝 停 / ≤25%=󱑰 / 26-60%=󱜝 / >60%=󱑯 |
 
 ### 曲线
 
-在 `scripts/mechrevo-fanctl` 顶部两行，改完 `sudo cp` 到 `/usr/local/bin/` 即可生效：
+决策温度 **T = 所有热源的最大值**，不再是单一传感器：
 
-```sh
-DUTIES="1 50 90 130 170 200"     # 1 = 停转 (写 0 时 EC 会先冲 30% 约 3 分钟)
-LIMITS="50 60 70 80 90 1000"    # 对应温度上限 (℃, 读 /sys/class/thermal/thermal_zone0)
+```text
+CPU 封装(coretemp) · GPU(nvidia-smi) · 内存条 x2(spd5118) · NVMe x2 · WiFi(iwlwifi) ·
+EC 机箱热区(acpitz/ECTZ) · EC 风扇温度(fan_temp)
 ```
 
-即 `≤50℃ 停 / 60→25% / 70→45% / 80→65% / 90→85% / >90→100%`。
-升温立即拉满对应档，降档要多降 3℃（迟滞，防止来回抖动）。cron 每分钟采样一次。
+> 为什么改：旧版只读 `thermal_zone0`，而这台机器上 `thermal_zone0` 是 **acpitz / ECTZ（EC 机箱热区）**，
+> 是反应最慢的传感器；CPU 封装在 coretemp，GPU/显存/内存/SSD 完全没参与。实测 ComfyUI 出图时
+> ECTZ 几乎不动 → 风扇停在 `duty 1`（`fan1=0/200 fan2=0/200`，完全停转），同时内存条 SPD5118
+> 已越过 55℃ 报警线。这就是“积热”的直接来源。
+
+改完 `sudo cp` 到 `/usr/local/bin/` 即可生效：
+
+```sh
+DUTIES="60 80 110 140 170 190 200"    # 1 = 停转 (写 0 时 EC 会先冲 30% 约 3 分钟)
+LIMITS="40 48 55 62 70 78 1000"      # 对应 T 上限 (℃)
+```
+
+即 `≤40→30% / 48→40% / 55→55% / 62→70% / 70→85% / 78→95% / >78→100%`。
+
+叠加的强制下限（比基础曲线优先）：
+
+| 触发条件 | 占空比下限 |
+|---|---|
+| 内存条 ≥52℃ / ≥56℃ / ≥60℃ | 110 / 150 / 200 |
+| GPU ≥75℃ / ≥82℃ / ≥88℃ | 150 / 190 / 200 |
+| NVMe ≥65℃ / ≥72℃ | 150 / 200 |
+| 接电源 / 电池 | 60 (30%) / 50 (25%) —— 永不停转 |
+
+升档立即；降档需比目标档下限再低 4℃ 且连续 12 拍（约 2 分钟），一档一档回落，防止来回抖动。
+
+### 观测
+
+```shell
+journalctl -t mechrevo-fanctl -n 20 --no-pager   # 每拍的温度快照 + 当前占空比
+systemctl status mechrevo-fanctl.timer
+sudo /usr/local/bin/mechrevo-fan -v              # EC 侧真实风扇状态
+```
+
+每拍都写 journal，所以万一再硬死机，`journalctl -t mechrevo-fanctl -n 20` 就是冻结前最后的温度快照。
+
+旧版曲线（历史背景，已废弃）：`DUTIES="1 50 90 130 170 200"` / `LIMITS="50 60 70 80 90 1000"`，
+即 `≤50℃ 停转 / 60→25% / 70→45% / 80→65% / 90→85%`，cron 每分钟一拍。
 
 ### 常用命令
 
