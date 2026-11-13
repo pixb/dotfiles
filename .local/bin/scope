@@ -8,10 +8,11 @@
 [ -d "$HOME/.cache/lf" ] || mkdir "$HOME/.cache/lf"
 
 cell_px(){
-    # 终端每格多少像素。lf 的 previewer 里 stdout 被重定向到预览文件，ioctl 在
-    # fd 1 上会失败，所以先用 fd 2，再退回 /dev/tty。
-    # foot/xterm 系的 TIOCGWINSZ 把 x/y 报成【单格像素】，有些终端报成【总像素】：
-    # 旧代码一律除以列/行数，在 foot 下得到 12/80 = 0，chafa 收到 -s 0x0 就不输出。
+    # Pixels per terminal cell. In lf's previewer stdout is redirected to the
+    # preview file, so the window-size ioctl fails on fd 1: try fd 2, then /dev/tty.
+    # foot and xterm report per-cell pixels in TIOCGWINSZ x/y while other
+    # terminals report total pixels, so dividing by rows and columns
+    # unconditionally gives 12/80 = 0 on foot and chafa prints nothing for -s 0x0.
     python3 -c '
 import fcntl,termios,struct,os
 def q(fd):
@@ -33,17 +34,22 @@ ch = int(ch) if ch >= 6 else 16
 print(min(cw, 40), min(ch, 60))' 2>/dev/null || echo "12 28"
 }
 
-# -c full: chafa 生成 per-image 动态调色板（实测 226 色）。
-# -c 256 是【固定 DEC256 立方】，投到渐变只剩 49 色 = 方块网格。
-# chafa 的 -s 是【ASCII 格数】，实测每格 = 10 px（-s 40x23 → header 1;1;400;180，即 400x180，等比适配）。
-# 预览区格数 × 每格像素 = 目标像素，再除以 10 得到 chafa 格数。
-# 每格像素取自本终端：herdr pane 里是 pane 自己的格子（实测 8x19），relay 再按外层
-# 终端格子重画，所以用 pane 尺寸只会偏小、不会溢出预览区。
-# relay 帧预算 1,000,000 px（src/kitty_graphics/sixel_surface.rs），超了整帧被丢。
-# 上限：chafa 把 1 个源像素当 1 格，请求格数超过源图像素数就是让它【放大小图】，
-# 预览会出现马赛克（24x12 的图被拉成 720 px 宽的色块）。直连 foot 不放大，这里对齐。
-# 源图像素尺寸：identify 在 pane 里可能失败（PATH/策略），逐级兜底并记录用了哪一级。
-# 源图像素尺寸：identify 在 pane 里可能失败（PATH/策略），逐级兜底并记录用了哪一级。
+# -c full makes chafa build a per-image dynamic palette (226 colours measured),
+# while -c 256 is the fixed DEC 256 cube, which reduces a gradient to 49 colours
+# and a visible block grid.
+# chafa's -s is an ASCII cell count, so the target pixel box is cells * cell
+# pixels, where the cell pixels come from the terminal answering XTWINOPS.
+# In a herdr pane that is the pane's own cell grid and the relay repaints in
+# outer-terminal cells, so sizing by the pane geometry can only come out
+# smaller, never overflowing the preview area.
+# The relay budget is 1,000,000 target pixels
+# (src/kitty_graphics/sixel_surface.rs) and a frame above it is dropped whole.
+# Chafa maps one source pixel to one cell, so requesting more cells than the
+# source has pixels upscales a small image into mosaic blocks (a 24x12 image
+# stretched across 720 px). A direct foot terminal does not upscale, so match
+# it here.
+# Source pixel dimensions: identify can fail inside a pane (PATH, policy), so
+# fall back to python PIL and then magick.
 is_dims(){
     set -- $1
     [ "$#" -eq 2 ] || return 1
@@ -76,16 +82,16 @@ sixel_cells(){
     DIMS=$(src_dims "$3"); SW=${DIMS% *}; SH=${DIMS#* }
     S=$(awk -v cols="$1" -v rows="$2" -v cw="$CW" -v ch="$CH" -v sw="$SW" -v sh="$SH" -v maxpx=1000000 '
         BEGIN{
-            # chafa 的 sixel 每个 ASCII 格 = cw 宽、ch/2 高（实测 12x28 格子出 12x14 px）。
+            # Each chafa sixel ASCII cell is cw wide and ch/2 tall (a 12x28 cell yields 12x14 px).
             hh = ch / 2;
             w = cols * cw; h = rows * ch;
             if (w * h > maxpx) { s = sqrt(maxpx / (w * h)); w = int(w * s); h = int(h * s) }
             A = int(w / cw); if (A < 1) A = 1
             B = int(h / ch); if (B < 1) B = 1
-            # 源图很小时不要放大到超过它自己的像素数。
+            # Do not upscale a small source past its own pixel dimensions.
             if (sw + 0 > 0 && A > sw + 0) A = sw + 0
             if (sh + 0 > 0 && B > sh + 0) B = sh + 0
-            # 目标像素必须保持源图宽高比：长方形像素会把斜边切成阶梯 = 撕裂。
+            # The target pixel box must keep the source aspect ratio: rectangular pixels turn every diagonal into a staircase.
             if (sw + 0 > 0 && sh + 0 > 0) {
                 a = A; b = int((a * cw * (sh + 0)) / ((sw + 0) * hh) + 0.5)
                 if (b > B) { b = B; a = int((b * hh * (sw + 0)) / ((sh + 0) * cw) + 0.5) }
@@ -96,8 +102,9 @@ sixel_cells(){
         }')
     printf '%s' "$S"
 }
-# 沿祖先进程链找 herdr。previewer 的直接父进程是 lf，herdr 在更上层；
-# 而且恢复/接管的 pane 里 HERDR_ENV 与 TERM_PROGRAM 可能不存在，所以不能只看环境变量。
+# Walk the ancestor chain looking for herdr: the previewer's direct parent is lf
+# and herdr sits above it, and a restored or attached pane may define neither
+# HERDR_ENV nor TERM_PROGRAM, so the environment alone is not enough.
 in_herdr(){
     p=$PPID
     i=0
@@ -113,20 +120,24 @@ in_herdr(){
 }
 
 show_img(){
-    # lf 传进来的 $2/$3 是预览区的【格数】。
-    # 注意：lf 只把 previewer 的【stdout】当预览【文本】缓存，所以任何图像协议
-    # 从 stdout 出去都会被文本化（ESC 变成 U+FFFD）——图像一律写 stderr。
-    # 1. fzf/nvim/dvtm 等嵌套环境：用 ANSI 色块
+    # lf passes the preview area as a cell count in $2/$3.
+    # Note that lf caches only the previewer's stdout as preview text, so a
+    # graphics protocol written to stdout is textualized (ESC becomes U+FFFD).
+    # 1. nested environments (fzf, nvim, dvtm): ANSI colour blocks
     if [ -n "$FZF_LEVEL" ] || [ -n "$NVIM" ] || [ -n "$DVTM" ]; then
         catimg -t -w 80 "$1"
-    # 2. herdr 环境：用 Sixel。herdr 会解码 pane 里的 Sixel 并按外层终端能力
-    #    重画（terminal.host_graphics = "sixel" 时外层 foot 直接显示）。
-    #    chafa 的 kitty 后端 header 与 payload 尺寸不自洽，严格实现会丢弃，
-    #    所以这里用 Sixel 走 herdr 的 relay。
+        # 2. herdr: Sixel. Herdr decodes the Sixel in the pane output and
+        #    repaints it for the outer terminal's capabilities, so with
+        #    terminal.host_graphics = "sixel" the outer foot renders it directly.
+        #    Chafa's kitty backend declares a header size that disagrees with its
+        #    payload, which strict receivers discard, so the frame goes through
+        #    the herdr Sixel relay instead.
     elif [ -n "$HERDR_ENV" ] || [ "$TERM_PROGRAM" = "herdr" ] || in_herdr; then
-        # 尺寸见 sixel_cells：20x10 格在 8x19 的 pane 格子里 = 160x190 px → -s 16x19 → 160x190 px。
-        # Sixel 没有擦除控制：写在图片之后的文本会把它抹掉，所以正常路径
-        # 只发图片，占位文本仅在 chafa 失败时作为兜底。
+        # Sizing is in sixel_cells: a 20x10 request in an 8x19 pane cell grid is
+        # 160x190 px, so -s 16x19 paints exactly 160x190 px.
+        # Sixel has no erase control, so text printed after an image overwrites
+        # it: the normal path emits only the image and a placeholder text line
+        # appears only when chafa fails.
         /usr/bin/chafa -f sixel \
                        -s "$(sixel_cells "$2" "$3" "$1")" \
                        --animate off \
@@ -135,11 +146,13 @@ show_img(){
                        -c full \
                        "$1" \
             || printf 'image %.120s\n' "$(basename "$1")"
-    # 3. 原生 foot 终端：sixel 写 stdout（直连终端直接显示）。
-    #    尺寸策略与 herdr 分支共用：按终端真实每格像素 + 源图宽高比求格数，
-    #    目标像素保持正方形。pane 里 in_herdr() 检测不到（setsid 断链、
-    #    恢复的 pane 没有 HERDR_ENV），所以两条分支必须同一策略，
-    #    否则 pane 会走这条并把 lf 的格数直接当 chafa 格数放大。
+    # 3. native foot terminal: Sixel on stdout, rendered by the terminal itself.
+    #    The sizing policy is shared with the herdr branch: the cell count comes
+    #    from the terminal's real cell pixels and the source aspect ratio, so
+    #    output pixels stay square. in_herdr() can miss a pane (setsid breaks the
+    #    ancestor chain and a restored pane has no HERDR_ENV), so both branches
+    #    must apply the same policy; otherwise a pane takes this branch and
+    #    scales lf's cell count directly as chafa cells.
     elif [ "$XDG_SESSION_TYPE" != "tty" ] && [ "$TERM" = "foot" ]; then
         /usr/bin/chafa -f sixel \
                        -s "$(sixel_cells "$2" "$3" "$1")" \
@@ -150,7 +163,7 @@ show_img(){
                        -c full \
                        --dither none \
                        "$1"
-    # 4. 兜底：ANSI 色块
+    # 4. fallback: ANSI colour blocks
     else
         catimg -t -w "$(($2 * 2))" "$1"
     fi
