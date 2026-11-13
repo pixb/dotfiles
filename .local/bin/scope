@@ -7,31 +7,152 @@
 ## save a cache file for faster preview
 [ -d "$HOME/.cache/lf" ] || mkdir "$HOME/.cache/lf"
 
+cell_px(){
+    # 终端每格多少像素。lf 的 previewer 里 stdout 被重定向到预览文件，ioctl 在
+    # fd 1 上会失败，所以先用 fd 2，再退回 /dev/tty。
+    # foot/xterm 系的 TIOCGWINSZ 把 x/y 报成【单格像素】，有些终端报成【总像素】：
+    # 旧代码一律除以列/行数，在 foot 下得到 12/80 = 0，chafa 收到 -s 0x0 就不输出。
+    python3 -c '
+import fcntl,termios,struct,os
+def q(fd):
+    return struct.unpack("hhhh", fcntl.ioctl(fd, termios.TIOCGWINSZ, b"\0"*8))
+try:
+    r, c, x, y = q(2)
+except OSError:
+    try:
+        fd = os.open("/dev/tty", os.O_RDONLY)
+        r, c, x, y = q(fd)
+        os.close(fd)
+    except OSError:
+        print(12, 28)
+        raise SystemExit
+cw = x / c if c > 0 and x >= 2 * c else x
+ch = y / r if r > 0 and y >= 2 * r else y
+cw = int(cw) if cw >= 4 else 8
+ch = int(ch) if ch >= 6 else 16
+print(min(cw, 40), min(ch, 60))' 2>/dev/null || echo "12 28"
+}
+
+# -c full: chafa 生成 per-image 动态调色板（实测 226 色）。
+# -c 256 是【固定 DEC256 立方】，投到渐变只剩 49 色 = 方块网格。
+# chafa 的 -s 是【ASCII 格数】，实测每格 = 10 px（-s 40x23 → header 1;1;400;180，即 400x180，等比适配）。
+# 预览区格数 × 每格像素 = 目标像素，再除以 10 得到 chafa 格数。
+# 每格像素取自本终端：herdr pane 里是 pane 自己的格子（实测 8x19），relay 再按外层
+# 终端格子重画，所以用 pane 尺寸只会偏小、不会溢出预览区。
+# relay 帧预算 1,000,000 px（src/kitty_graphics/sixel_surface.rs），超了整帧被丢。
+# 上限：chafa 把 1 个源像素当 1 格，请求格数超过源图像素数就是让它【放大小图】，
+# 预览会出现马赛克（24x12 的图被拉成 720 px 宽的色块）。直连 foot 不放大，这里对齐。
+# 源图像素尺寸：identify 在 pane 里可能失败（PATH/策略），逐级兜底并记录用了哪一级。
+# 源图像素尺寸：identify 在 pane 里可能失败（PATH/策略），逐级兜底并记录用了哪一级。
+is_dims(){
+    set -- $1
+    [ "$#" -eq 2 ] || return 1
+    case "$1$2" in
+        *[!0-9]*) return 1 ;;
+    esac
+    [ "$1" -gt 0 ] && [ "$2" -gt 0 ]
+}
+
+src_dims(){
+    D=$(identify -format '%w %h' -- "$1" 2>/dev/null); M=identify
+    is_dims "$D" || {
+        D=$(python3 - "$1" 2>/dev/null <<'PY'
+import sys
+try:
+    from PIL import Image
+    im = Image.open(sys.argv[1])
+    print(im.size[0], im.size[1])
+except Exception:
+    pass
+PY
+); M=python3-PIL
+    }
+    is_dims "$D" || { D=$(/usr/bin/magick identify -format '%w %h' -- "$1" 2>/dev/null); M=magick; }
+    is_dims "$D" || { D=""; M=none; }
+    printf 'src_dims %s method=%s dims=[%s] file=%s\n' "$(date +%H:%M:%S)" "$M" "$D" "$1" >> /var/tmp/scope-dims.log 2>/dev/null
+    printf '%s' "$D"
+}
+sixel_cells(){
+    CELLS=$(cell_px); CW=${CELLS% *}; CH=${CELLS#* }
+    DIMS=$(src_dims "$3"); SW=${DIMS% *}; SH=${DIMS#* }
+    awk -v cols="$1" -v rows="$2" -v cw="$CW" -v ch="$CH" -v sw="$SW" -v sh="$SH" -v maxpx=1000000 '
+        BEGIN{
+            # chafa 的 sixel 每个 ASCII 格 = cw 宽、ch/2 高（实测 12x28 格子出 12x14 px）。
+            hh = ch / 2;
+            w = cols * cw; h = rows * ch;
+            if (w * h > maxpx) { s = sqrt(maxpx / (w * h)); w = int(w * s); h = int(h * s) }
+            A = int(w / cw); if (A < 1) A = 1
+            B = int(h / ch); if (B < 1) B = 1
+            # 源图很小时不要放大到超过它自己的像素数。
+            if (sw + 0 > 0 && A > sw + 0) A = sw + 0
+            if (sh + 0 > 0 && B > sh + 0) B = sh + 0
+            # 目标像素必须保持源图宽高比：长方形像素会把斜边切成阶梯 = 撕裂。
+            if (sw + 0 > 0 && sh + 0 > 0) {
+                a = A; b = int((a * cw * (sh + 0)) / ((sw + 0) * hh) + 0.5)
+                if (b > B) { b = B; a = int((b * hh * (sw + 0)) / ((sh + 0) * cw) + 0.5) }
+                if (b < 1) b = 1
+            } else { a = A; b = B }
+            if (a < 1) a = 1
+            printf "%dx%d", a, b
+        }' > /var/tmp/scope-size.txt
+    printf 'sixel_cells %s cols=%s rows=%s cw=%s ch=%s sw=%s sh=%s -> -s %s\n' "$(date +%H:%M:%S)" "$1" "$2" "$CW" "$CH" "$SW" "$SH" "$(cat /var/tmp/scope-size.txt)" >> /var/tmp/scope-dims.log 2>/dev/null
+    cat /var/tmp/scope-size.txt
+}
+# 沿祖先进程链找 herdr。previewer 的直接父进程是 lf，herdr 在更上层；
+# 而且恢复/接管的 pane 里 HERDR_ENV 与 TERM_PROGRAM 可能不存在，所以不能只看环境变量。
+in_herdr(){
+    p=$PPID
+    i=0
+    while [ "$i" -lt 8 ]; do
+        [ -z "$p" ] && break
+        [ "$p" -le 1 ] && break
+        c=$(ps -o comm= -p "$p" 2>/dev/null)
+        case "$c" in *herdr*) return 0 ;; esac
+        p=$(ps -o ppid= -p "$p" 2>/dev/null | tr -d ' ')
+        i=$((i + 1))
+    done
+    return 1
+}
+
 show_img(){
+    # lf 传进来的 $2/$3 是预览区的【格数】。
+    # 注意：lf 只把 previewer 的【stdout】当预览【文本】缓存，所以任何图像协议
+    # 从 stdout 出去都会被文本化（ESC 变成 U+FFFD）——图像一律写 stderr。
     # 1. fzf/nvim/dvtm 等嵌套环境：用 ANSI 色块
     if [ -n "$FZF_LEVEL" ] || [ -n "$NVIM" ] || [ -n "$DVTM" ]; then
         catimg -t -w 80 "$1"
-    # 2. herdr 环境：用 Kitty graphics（herdr 仅支持 Kitty 协议）
-    #    检测环境变量或父进程是否为 herdr
-    #    注意：herdr 把 pane 的 Sixel 解码成 RGBA 后以合成 Kitty 送外层，
-    #    所以外层必须支持 Kitty（kitty/WezTerm/GPW/MLterm）。foot 不支持 Kitty，
-    #    在 herdr+foot 里 pane 的图片无法显示；此处用 kitty 是最安全选择。
-    elif [ -n "$HERDR_ENV" ] || [ "$TERM_PROGRAM" = "herdr" ] \
-         || (ps -o comm= -p "$PPID" 2>/dev/null | grep -q 'herdr'); then
-        /usr/bin/chafa -f kitty \
-                       -s "$2x$3" \
-                       --animate off \
-                       --polite on \
-                       -t 1 \
-                       "$1"
-    # 3. 原生 foot 终端：用 Sixel（质量更高）
-    elif [ "$XDG_SESSION_TYPE" != "tty" ] && [ "$TERM" = "foot" ]; then
+    # 2. herdr 环境：用 Sixel。herdr 会解码 pane 里的 Sixel 并按外层终端能力
+    #    重画（terminal.host_graphics = "sixel" 时外层 foot 直接显示）。
+    #    chafa 的 kitty 后端 header 与 payload 尺寸不自洽，严格实现会丢弃，
+    #    所以这里用 Sixel 走 herdr 的 relay。
+    elif [ -n "$HERDR_ENV" ] || [ "$TERM_PROGRAM" = "herdr" ] || in_herdr; then
+        printf 'branch herdr %s\n' "$(date +%H:%M:%S)" >> /var/tmp/scope-dims.log 2>/dev/null
+        # 尺寸见 sixel_cells：20x10 格在 8x19 的 pane 格子里 = 160x190 px → -s 16x19 → 160x190 px。
+        # Sixel 没有擦除控制：写在图片之后的文本会把它抹掉，所以正常路径
+        # 只发图片，占位文本仅在 chafa 失败时作为兜底。
         /usr/bin/chafa -f sixel \
-                       -s "$2x$3" \
+                       -s "$(sixel_cells "$2" "$3" "$1")" \
+                       --animate off \
+                       --polite off \
+                       --dither none \
+                       -c full \
+                       "$1" \
+            || printf 'image %.120s\n' "$(basename "$1")"
+    # 3. 原生 foot 终端：sixel 写 stdout（直连终端直接显示）。
+    #    尺寸策略与 herdr 分支共用：按终端真实每格像素 + 源图宽高比求格数，
+    #    目标像素保持正方形。pane 里 in_herdr() 检测不到（setsid 断链、
+    #    恢复的 pane 没有 HERDR_ENV），所以两条分支必须同一策略，
+    #    否则 pane 会走这条并把 lf 的格数直接当 chafa 格数放大。
+    elif [ "$XDG_SESSION_TYPE" != "tty" ] && [ "$TERM" = "foot" ]; then
+        printf 'branch foot %s\n' "$(date +%H:%M:%S)" >> /var/tmp/scope-dims.log 2>/dev/null
+        /usr/bin/chafa -f sixel \
+                       -s "$(sixel_cells "$2" "$3" "$1")" \
                        --animate off \
                        --polite on \
                        -t 1 \
                        --bg '#111111' \
+                       -c full \
+                       --dither none \
                        "$1"
     # 4. 兜底：ANSI 色块
     else
