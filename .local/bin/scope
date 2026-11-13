@@ -69,13 +69,12 @@ PY
     }
     is_dims "$D" || { D=$(/usr/bin/magick identify -format '%w %h' -- "$1" 2>/dev/null); M=magick; }
     is_dims "$D" || { D=""; M=none; }
-    printf 'src_dims %s method=%s dims=[%s] file=%s\n' "$(date +%H:%M:%S)" "$M" "$D" "$1" >> /var/tmp/scope-dims.log 2>/dev/null
     printf '%s' "$D"
 }
 sixel_cells(){
     CELLS=$(cell_px); CW=${CELLS% *}; CH=${CELLS#* }
     DIMS=$(src_dims "$3"); SW=${DIMS% *}; SH=${DIMS#* }
-    awk -v cols="$1" -v rows="$2" -v cw="$CW" -v ch="$CH" -v sw="$SW" -v sh="$SH" -v maxpx=1000000 '
+    S=$(awk -v cols="$1" -v rows="$2" -v cw="$CW" -v ch="$CH" -v sw="$SW" -v sh="$SH" -v maxpx=1000000 '
         BEGIN{
             # chafa 的 sixel 每个 ASCII 格 = cw 宽、ch/2 高（实测 12x28 格子出 12x14 px）。
             hh = ch / 2;
@@ -94,9 +93,8 @@ sixel_cells(){
             } else { a = A; b = B }
             if (a < 1) a = 1
             printf "%dx%d", a, b
-        }' > /var/tmp/scope-size.txt
-    printf 'sixel_cells %s cols=%s rows=%s cw=%s ch=%s sw=%s sh=%s -> -s %s\n' "$(date +%H:%M:%S)" "$1" "$2" "$CW" "$CH" "$SW" "$SH" "$(cat /var/tmp/scope-size.txt)" >> /var/tmp/scope-dims.log 2>/dev/null
-    cat /var/tmp/scope-size.txt
+        }')
+    printf '%s' "$S"
 }
 # 沿祖先进程链找 herdr。previewer 的直接父进程是 lf，herdr 在更上层；
 # 而且恢复/接管的 pane 里 HERDR_ENV 与 TERM_PROGRAM 可能不存在，所以不能只看环境变量。
@@ -126,7 +124,6 @@ show_img(){
     #    chafa 的 kitty 后端 header 与 payload 尺寸不自洽，严格实现会丢弃，
     #    所以这里用 Sixel 走 herdr 的 relay。
     elif [ -n "$HERDR_ENV" ] || [ "$TERM_PROGRAM" = "herdr" ] || in_herdr; then
-        printf 'branch herdr %s\n' "$(date +%H:%M:%S)" >> /var/tmp/scope-dims.log 2>/dev/null
         # 尺寸见 sixel_cells：20x10 格在 8x19 的 pane 格子里 = 160x190 px → -s 16x19 → 160x190 px。
         # Sixel 没有擦除控制：写在图片之后的文本会把它抹掉，所以正常路径
         # 只发图片，占位文本仅在 chafa 失败时作为兜底。
@@ -144,7 +141,6 @@ show_img(){
     #    恢复的 pane 没有 HERDR_ENV），所以两条分支必须同一策略，
     #    否则 pane 会走这条并把 lf 的格数直接当 chafa 格数放大。
     elif [ "$XDG_SESSION_TYPE" != "tty" ] && [ "$TERM" = "foot" ]; then
-        printf 'branch foot %s\n' "$(date +%H:%M:%S)" >> /var/tmp/scope-dims.log 2>/dev/null
         /usr/bin/chafa -f sixel \
                        -s "$(sixel_cells "$2" "$3" "$1")" \
                        --animate off \
