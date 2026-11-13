@@ -38,19 +38,14 @@
 	untracked = red bold
 [diff]
 tool = vimdiff
-  ; cmd = /home/pix/dev/test/testgitdiff/nvimdiff_debug.sh "$LOCAL" "$REMOTE"
 [difftool "vimdiff"]
 prompt = false
 cmd = /usr/bin/nvim -d $LOCAL $REMOTE
 [merge]
-  ; tool = diffmerge
 tool = nvimdiff
-# [mergetool "diffmerge"]
-#   cmd = diffmerge "$BASE" "$LOCAL" "$REMOTE" "$MERGED"
-# [includeIf "gitdir:~/dev/linux-demo/git/"]
-# 	path = ~/dev/linux-demo/git/.gitconfig
 [mergetool "nvimdiff"]
-  cmd = nvim -d $LOCAL $BASE $REMOTE $MERGED -c '$wincmd w' -c 'wincmd J'
+  trustExitCode = true  # 可选：信任 nvim 退出码（:cq 退出则视为失败）
+  keepBackup = false
 [safe]
 	directory = /work/docker/docker-prometheus
 [http]
