@@ -300,6 +300,52 @@
         //              the corrosponding action will only trigger once when key pressed or released
         //              the pressed action and released action could define at the same time
         .key = .{
+            // screen recording (Super+Ctrl+Shift)
+            .{
+                .keysym = "c",
+                .modifiers = .{ .mod4 = true, .ctrl = true, .shift = true },
+                .event = .{
+                    .click = .{
+                        .pressed = .{
+                            .spawn_shell = .{ .cmd = "${HOME}/.local/bin/capture" },
+                        },
+                    },
+                },
+            },
+            .{
+                .keysym = "m",
+                .modifiers = .{ .mod4 = true, .ctrl = true, .shift = true },
+                .event = .{
+                    .click = .{
+                        .pressed = .{
+                            .spawn_shell = .{ .cmd = "${HOME}/.local/bin/capture --mute" },
+                        },
+                    },
+                },
+            },
+            .{
+                .keysym = "6",
+                .modifiers = .{ .mod4 = true, .ctrl = true, .shift = true },
+                .event = .{
+                    .click = .{
+                        .pressed = .{
+                            .spawn_shell = .{ .cmd = "${HOME}/.local/bin/capture --60" },
+                        },
+                    },
+                },
+            },
+            .{
+                .keysym = "s",
+                .modifiers = .{ .mod4 = true, .ctrl = true, .shift = true },
+                .event = .{
+                    .click = .{
+                        .pressed = .{
+                            .spawn_shell = .{ .cmd = "${HOME}/.local/bin/capture --stop" },
+                        },
+                    },
+                },
+            },
+
             .{
                 .keysym = "r",
                 .modifiers = .{ .mod4 = true, .shift = true },

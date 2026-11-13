@@ -48,6 +48,7 @@ step1_deps() {
 
   sudo pacman -S --needed wlroots0.20 scdoc tllist wayland-protocols sysstat gammastep --noconfirm
   sudo pacman -S --needed kanshi swayidle stow --noconfirm
+  sudo pacman -S --needed wf-recorder slurp --noconfirm
 
   # fcft 是 AUR 包，使用 trizen 安装
   if ! pacman -Qi fcft >/dev/null 2>&1; then
