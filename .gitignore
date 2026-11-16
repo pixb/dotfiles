@@ -45,3 +45,6 @@ newsboat/.config/newsboat/proxy.conf
 zsh/.local/bin/
 zsh/.local/share/
 zsh/.local/state/
+
+# fcitx5 运行时生成的输入法缓存
+fcitx5/.config/fcitx5/conf/cached_layouts

@@ -1,0 +1,12 @@
+[Unit]
+Description=MECHREVO 风扇曲线一拍 (写 Uniwill EC 占空比)
+Documentation=file:///usr/local/bin/mechrevo-fanctl
+# 风扇控制权唯一: tccd 的 Auto 表会在几秒内覆盖写入值
+Conflicts=tccd.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/mechrevo-fanctl
+Nice=5
+# 单拍失败不重启系统, 下一拍继续尝试
+SuccessExitStatus=0 1

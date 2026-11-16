@@ -482,7 +482,9 @@ systemctl_start nmb
 
 aur_install herdr-bin
 
+cd "${DOTFILES_PATH}"
 stow -t ~ herdr
+cd "${SCRIPT_DIR}"
 
 npm install -g --allow-scripts=opencode-ai opencode-ai || true
 

@@ -8,8 +8,10 @@
 # 安装内容:
 #   dkms + linux-headers + mechrevo-drivers-dkms  (tuxedo_io / 键盘 / WMI 驱动)
 #   /usr/local/bin/mechrevo-fan    读/写风扇占空比 (mechrevo-fan.c 编译)
-#   /usr/local/bin/mechrevo-fanctl 风扇曲线执行器 (cron 每分钟)
-#   /etc/cron.d/fanmode            '* * * * * root /usr/local/bin/mechrevo-fanctl'
+#   /usr/local/bin/mechrevo-fanctl 风扇曲线执行器 (多源温度取最大值)
+#   /etc/systemd/system/mechrevo-fanctl.{service,timer}  每 10 秒一拍
+#     (旧的 /etc/cron.d/fanmode 每分钟一拍会被删除: 两处同时写占空比会互相打架)
+#   /etc/systemd/system/nvidia-clocklimit.service  GPU 锁频 (本机 TGP 不可写)
 # 停用:
 #   tccd.service (Tuxedo Control Center) —— 它的 Auto 模式会在几秒内把
 #   mechrevo-fanctl 写入的占空比拽回 EC 内置曲线，风扇控制权只能有一个。
@@ -94,16 +96,45 @@ else
   exit 1
 fi
 
-# === Fan curve runner + cron ===
+# === Fan curve runner + systemd timer ===
+DOTFILES_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 if [ -f "${SCRIPT_DIR}/mechrevo-fanctl" ]; then
   sudo cp "${SCRIPT_DIR}/mechrevo-fanctl" /usr/local/bin/mechrevo-fanctl
   sudo chmod 755 /usr/local/bin/mechrevo-fanctl
-  echo '* * * * * root /usr/local/bin/mechrevo-fanctl' | sudo tee /etc/cron.d/fanmode >/dev/null
-  sudo chmod 644 /etc/cron.d/fanmode
-  info "/usr/local/bin/mechrevo-fanctl + /etc/cron.d/fanmode"
+  info "/usr/local/bin/mechrevo-fanctl"
 else
   warn "mechrevo-fanctl 不存在，跳过曲线安装"
   exit 1
+fi
+
+for unit in mechrevo-fanctl.service mechrevo-fanctl.timer; do
+  if [ -f "${DOTFILES_DIR}/etc/systemd/system/${unit}" ]; then
+    sudo cp "${DOTFILES_DIR}/etc/systemd/system/${unit}" "/etc/systemd/system/${unit}"
+    sudo chmod 644 "/etc/systemd/system/${unit}"
+  else
+    warn "etc/systemd/system/${unit} 不存在，跳过"
+  fi
+done
+
+# 旧的 cron 一拍必须撤掉: 曲线只能有一个写入者
+if [ -f /etc/cron.d/fanmode ]; then
+  sudo rm -f /etc/cron.d/fanmode
+  info "/etc/cron.d/fanmode 已删除 (改由 systemd timer 驱动)"
+fi
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now mechrevo-fanctl.timer
+info "mechrevo-fanctl.timer 已启用 (每 10 秒一拍)"
+
+# GPU 锁频 (TGP 在这台机器上不可写: nvidia-smi -pl 被拒, EC ctgp_offset 只接受正向偏移)
+if command -v nvidia-smi >/dev/null 2>&1; then
+  if [ -f "${DOTFILES_DIR}/etc/systemd/system/nvidia-clocklimit.service" ]; then
+    sudo cp "${DOTFILES_DIR}/etc/systemd/system/nvidia-clocklimit.service" /etc/systemd/system/
+    sudo chmod 644 /etc/systemd/system/nvidia-clocklimit.service
+    sudo systemctl daemon-reload
+    sudo systemctl enable --now nvidia-clocklimit.service
+    info "nvidia-clocklimit.service 已启用 (SM 210-1400MHz / 显存 6001MHz)"
+  fi
 fi
 
 # tccd 的 Auto 会覆盖脚本写入的占空比
@@ -125,5 +156,6 @@ cat <<'EOF'
   sudo /usr/local/bin/mechrevo-fan a        # 交回 EC 自动 (需重新启用 tccd)
 
 改曲线: 编辑 /usr/local/bin/mechrevo-fanctl 顶部的 DUTIES / LIMITS
+改锁频: 编辑 /etc/systemd/system/nvidia-clocklimit.service 里的 -lgc / -lmc 数值
 回退 TCC: sudo systemctl enable --now tccd.service && sudo /usr/local/bin/mechrevo-fan a
 EOF

@@ -2,6 +2,9 @@
 # river/init
 # @author nate zhou
 # @since 2025,2026
+#
+# river 0.5 is non-monolithic and refuses init files that reference its CLI tool.
+# All keybindings live in the window manager config: ~/.config/kwm/config.zon
 
 export DISPLAY=:0
 
