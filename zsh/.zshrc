@@ -42,6 +42,12 @@ source ~/.pl10krc2
 #  fzf  #
 #########
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+# shell keybindings (migrated from dotfiles/config/fzf.zsh)
+[ -f /usr/share/fzf/key-bindings.zsh ] && source /usr/share/fzf/key-bindings.zsh
+# Override Ctrl-T -> Ctrl-F for file finder
+bindkey -M emacs '^F' fzf-file-widget
+bindkey -M vicmd '^F' fzf-file-widget
+bindkey -M viins '^F' fzf-file-widget
 
 #########################
 #  zsh-autosuggestions  #
@@ -51,7 +57,6 @@ export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=yellow'
 # Load my custom configurations
 source $HOME/dotfiles/config/alias.zsh
 source $HOME/dotfiles/config/git.zsh
-source $HOME/dotfiles/config/fzf.zsh
 source $HOME/dotfiles/config/android.zsh
 source $HOME/.profile
 
