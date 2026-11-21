@@ -127,9 +127,15 @@ fi
 
 npm config set prefix ~/.npm-global
 
-pacman_install stow
+pacman_install neovim openssh tk fzf the_silver_searcher
+pacman_install tmux ripgrep lazygit imagemagick highlight
+pacman_install p7zip rsync cifs-utils smbclient stow
+pacman_install brightnessctl wob pacman-contrib
+pacman_install neomutt isync eza parallel calc
 # transparent encryption for private/secrets git repo (NAS Gitea)
-pacman_install git-crypt
+pacman_install git-crypt go
+
+go env -w GO111MODULE=on
 
 # === dotfiles ===
 DOTFILES_PATH=${HOME}/dotfiles
@@ -142,6 +148,8 @@ stow -t ~ git
 stow -t ~ shell
 stow -t ~ go
 stow -t ~ gnupg
+stow -t ~ readline
+stow -t ~ wget
 mkdir -p "${HOME}/.local"
 # --no-folding keeps ~/.local/bin and ~/.local/share real directories so tools
 # that install there (uv, pip) do not write into the dotfiles repo.
@@ -196,12 +204,6 @@ fi
 cd "${HOME}/dotfiles" || exit
 stow -t ~ trizen
 cd "${SCRIPT_DIR}" || exit
-
-pacman_install neovim openssh tk fzf the_silver_searcher
-pacman_install tmux go ripgrep lazygit imagemagick highlight
-pacman_install p7zip rsync cifs-utils smbclient stow
-pacman_install brightnessctl wob pacman-contrib
-pacman_install neomutt isync eza
 
 # === pgloader (PostgreSQL migration CLI, AUR; builds from Common Lisp source) ===
 aur_install pgloader
@@ -266,6 +268,10 @@ cd ${SCRIPT_DIR}
 
 aur_install fastfetch
 pacman_install gdb gcc cmake meson htop btop duf usbutils rust
+
+# rust toolchain (cargo/rustc) is installed from the official Arch repo above;
+# only ensure the XDG CARGO_HOME layout exists (see shell/.config/shell/profile.sh).
+mkdir -p "${XDG_DATA_HOME:-$HOME/.local/share}/cargo/bin"
 
 # === mechrevo JiguangX laptop (drivers + fan control) ===
 if grep -qi 'MECHREVO' /sys/devices/virtual/dmi/id/sys_vendor 2>/dev/null; then
@@ -479,8 +485,6 @@ systemctl_enable smb
 systemctl_start smb
 systemctl_enable nmb
 systemctl_start nmb
-
-aur_install herdr-bin
 
 cd "${DOTFILES_PATH}"
 stow -t ~ herdr
