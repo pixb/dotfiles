@@ -47,6 +47,9 @@ bindkey -M viins '^F' fzf-file-widget
 export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=yellow'
 
 # Load my custom configurations
+# general bash/zsh aliases first, then zsh-specific ones (can override)
+[ -f "$HOME/.config/shell/aliases.sh" ] && . "$HOME/.config/shell/aliases.sh"
+[ -f "$HOME/.config/shell/functions.sh" ] && . "$HOME/.config/shell/functions.sh"
 source $HOME/dotfiles/config/alias.zsh
 source $HOME/dotfiles/config/git.zsh
 source $HOME/dotfiles/config/android.zsh

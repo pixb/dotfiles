@@ -7,7 +7,7 @@
 
 # shell history switch
 function hist() {
-    PROFILE="${HOME}/.profile"
+    PROFILE="${HOME}/.zprofile"
 
     function status() {
         if [ -z "$HISTFILE" ]; then
