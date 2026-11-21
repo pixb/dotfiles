@@ -224,6 +224,15 @@ if command -v ssh >/dev/null 2>&1; then
   systemctl_start sshd.service
 fi
 
+# ssh-agent socket activation (SSH_AUTH_SOCK is set in profile.sh)
+systemctl --user enable --now ssh-agent.socket
+
+# load the SSH key into the socket-activated agent (key has no passphrase)
+export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/ssh-agent.socket"
+if [ -f "${HOME}/.ssh/id_rsa" ]; then
+  ssh-add "${HOME}/.ssh/id_rsa"
+fi
+
 # pyenv
 export PYENV_ROOT="${XDG_DATA_HOME}/pyenv"
 if [ -d "$PYENV_ROOT" ]; then

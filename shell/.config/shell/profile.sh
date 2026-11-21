@@ -65,6 +65,7 @@ export PYTHON_HISTORY="$XDG_STATE_HOME/python_history" # ~/.python_history
 export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc" # ~/.npmrc
 export GRADLE_USER_HOME="$XDG_DATA_HOME/gradle" # ~/.gradle
 export ABDUCO_SOCKET_DIR="$XDG_RUNTIME_DIR" # abduco sessions in runtime dir
+export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent.socket" # systemd socket-activated ssh-agent
 
 # pyenv login layer (shell-agnostic): root + bin PATH + shims.
 # Interactive layer `pyenv init - <shell>` lives in each rc file.
