@@ -56,9 +56,15 @@ export WGETRC="$XDG_CONFIG_HOME/wget/wgetrc"
 export ANDROID_SDK_HOME="$XDG_CONFIG_HOME/android"
 export CARGO_HOME="$XDG_DATA_HOME/cargo"
 export PATH="$CARGO_HOME/bin:$PATH" # cargo-installed binaries (rust toolchain comes from pacman)
+export NPM_GLOBAL="$XDG_DATA_HOME/npm-global"
+export PATH="$NPM_GLOBAL/bin:$PATH" # npm globally-installed binaries
 export GOPATH="$XDG_DATA_HOME/go"
 export GOMODCACHE="$XDG_CACHE_HOME/go/mod" # module cache is disposable, keep in cache
 export NODE_REPL_HISTORY="$XDG_DATA_HOME/node_repl_history" # ~/.node_repl_history
+export PYTHON_HISTORY="$XDG_STATE_HOME/python_history" # ~/.python_history
+export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc" # ~/.npmrc
+export GRADLE_USER_HOME="$XDG_DATA_HOME/gradle" # ~/.gradle
+export ABDUCO_SOCKET_DIR="$XDG_RUNTIME_DIR" # abduco sessions in runtime dir
 
 # pyenv login layer (shell-agnostic): root + bin PATH + shims.
 # Interactive layer `pyenv init - <shell>` lives in each rc file.

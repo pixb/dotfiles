@@ -61,13 +61,6 @@ source $HOME/dotfiles/config/functions.zsh
 export GOPROXY=https://goproxy.cn,direct
 
 
-#########
-#  npm  #
-#########
-if [ -e "${HOME}/.npm-global" ]; then
-  export PATH="$HOME/.npm-global/bin:$PATH"
-fi
-
 ###########
 #  pyenv  #
 ###########
