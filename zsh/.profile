@@ -42,5 +42,3 @@ export WLR_RENDERER_ALLOW_SOFTWARE=1
 export SDL_VIDEODRIVER=wayland
 export _JAVA_AWT_WM_NONEREPARENTING=1
 export GDK_BACKEND="wayland,x11"
-
-[ -f "$CARGO_HOME/env" ] && . "$CARGO_HOME/env"
