@@ -1,6 +1,3 @@
-# Load Zsh profile
-source ~/.zprofile
-
 export GPG_TTY=$(tty) # TUI pinentry, need be set for each pts
 
 # 设置 vi 模式
@@ -53,7 +50,6 @@ export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=yellow'
 source $HOME/dotfiles/config/alias.zsh
 source $HOME/dotfiles/config/git.zsh
 source $HOME/dotfiles/config/android.zsh
-source $HOME/.profile
 
 # shell teleport: comma-path aliases (,h ,dm ,m ...); autocd makes them cd
 [ -f "$HOME/.config/shell/teleport.sh" ] && . "$HOME/.config/shell/teleport.sh"
@@ -75,13 +71,8 @@ fi
 ###########
 #  pyenv  #
 ###########
-if [ ! -d "${HOME}"/.pyenv ]; then
-  echo -e "${COLOR_YELLOW}pyenv is not install${COLOR_NC}"
-  git clone https://github.com/pyenv/pyenv.git "${HOME}"/.pyenv
-fi
-export PATH=$HOME/.pyenv/bin:$PATH
-eval "$(pyenv init --path)"
-eval "$(pyenv init -)"
+# 安装由 scripts/arch_install_user.sh 负责；这里只做交互层初始化
+[ -x "$PYENV_ROOT/bin/pyenv" ] && eval "$(pyenv init - zsh)"
 
 
 #########

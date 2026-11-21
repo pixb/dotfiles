@@ -222,16 +222,14 @@ if command -v ssh >/dev/null 2>&1; then
 fi
 
 # pyenv
-if [ -d "${HOME}"/.pyenv ]; then
+export PYENV_ROOT="${XDG_DATA_HOME:-$HOME/.local/share}/pyenv"
+if [ -d "$PYENV_ROOT" ]; then
   echo -e "${COLOR_GREEN}pyenv is installed${COLOR_NC}"
-  export PATH=$HOME/.pyenv/bin:$PATH
-  eval "$(pyenv init -)"
 else
   echo -e "${COLOR_YELLOW}pyenv is not install${COLOR_NC}"
-  git clone https://github.com/pyenv/pyenv.git "${HOME}"/.pyenv
-  export PATH=$HOME/.pyenv/bin:$PATH
-  eval "$(pyenv init -)"
+  git clone https://github.com/pyenv/pyenv.git "$PYENV_ROOT"
 fi
+export PATH="$PYENV_ROOT/bin:$PATH"
 
 if command -v pyenv &>/dev/null; then
   if pyenv versions --bare | grep -qx "3.12.13"; then
