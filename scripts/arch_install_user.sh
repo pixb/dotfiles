@@ -9,6 +9,9 @@ COLOR_NC='\033[0m'
 # === handing failures and errors. ===
 set -euo pipefail
 
+# === XDG base dirs (script does not source profile.sh) ===
+XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+
 # === Time ===
 TIME="$(date +%Y-%m-%d_%H-%M-%S)"
 # === File Variable ===
@@ -121,11 +124,11 @@ systemctl_start() {
 
 pacman_install nodejs npm
 
-if [ ! -e ${HOME}/.npm-global ]; then
-  mkdir -p ${HOME}/.npm-global
+if [ ! -e "${XDG_DATA_HOME}/npm-global" ]; then
+  mkdir -p "${XDG_DATA_HOME}/npm-global"
 fi
 
-npm config set prefix ~/.npm-global
+npm config set prefix "${XDG_DATA_HOME}/npm-global"
 
 pacman_install neovim openssh tk fzf the_silver_searcher
 pacman_install tmux ripgrep lazygit imagemagick highlight
@@ -222,7 +225,7 @@ if command -v ssh >/dev/null 2>&1; then
 fi
 
 # pyenv
-export PYENV_ROOT="${XDG_DATA_HOME:-$HOME/.local/share}/pyenv"
+export PYENV_ROOT="${XDG_DATA_HOME}/pyenv"
 if [ -d "$PYENV_ROOT" ]; then
   echo -e "${COLOR_GREEN}pyenv is installed${COLOR_NC}"
 else
@@ -269,7 +272,7 @@ pacman_install gdb gcc cmake meson htop btop duf usbutils rust
 
 # rust toolchain (cargo/rustc) is installed from the official Arch repo above;
 # only ensure the XDG CARGO_HOME layout exists (see shell/.config/shell/profile.sh).
-mkdir -p "${XDG_DATA_HOME:-$HOME/.local/share}/cargo/bin"
+mkdir -p "${XDG_DATA_HOME}/cargo/bin"
 
 # === mechrevo JiguangX laptop (drivers + fan control) ===
 if grep -qi 'MECHREVO' /sys/devices/virtual/dmi/id/sys_vendor 2>/dev/null; then
