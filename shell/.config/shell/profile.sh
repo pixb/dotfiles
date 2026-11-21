@@ -58,4 +58,10 @@ export CARGO_HOME="$XDG_DATA_HOME/cargo"
 export PATH="$CARGO_HOME/bin:$PATH" # cargo-installed binaries (rust toolchain comes from pacman)
 export GOPATH="$XDG_DATA_HOME/go"
 
+# pyenv login layer (shell-agnostic): root + bin PATH + shims.
+# Interactive layer `pyenv init - <shell>` lives in each rc file.
+export PYENV_ROOT="$XDG_DATA_HOME/pyenv"
+[ -d "$PYENV_ROOT/bin" ] && export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init --path)"
+
 export GRIM_DEFAULT_DIR="$HOME/Pictures/Screenshots"
