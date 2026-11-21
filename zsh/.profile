@@ -42,8 +42,5 @@ export WLR_RENDERER_ALLOW_SOFTWARE=1
 export SDL_VIDEODRIVER=wayland
 export _JAVA_AWT_WM_NONEREPARENTING=1
 export GDK_BACKEND="wayland,x11"
-export XDG_SESSION_TYPE=wayland
-export XDG_SESSION_DESKTOP=River
-export XDG_CURRENT_DESKTOP=River
 
 [ -f "$CARGO_HOME/env" ] && . "$CARGO_HOME/env"
