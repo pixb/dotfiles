@@ -58,6 +58,7 @@ export CARGO_HOME="$XDG_DATA_HOME/cargo"
 export PATH="$CARGO_HOME/bin:$PATH" # cargo-installed binaries (rust toolchain comes from pacman)
 export GOPATH="$XDG_DATA_HOME/go"
 export GOMODCACHE="$XDG_CACHE_HOME/go/mod" # module cache is disposable, keep in cache
+export NODE_REPL_HISTORY="$XDG_DATA_HOME/node_repl_history" # ~/.node_repl_history
 
 # pyenv login layer (shell-agnostic): root + bin PATH + shims.
 # Interactive layer `pyenv init - <shell>` lives in each rc file.
