@@ -15,7 +15,6 @@ PS1='[\u@\h \W]\$ '
 export SDKMAN_DIR="$HOME/.sdkman"
 [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
 
-[[ -s "/home/pix/.gvm/scripts/gvm" ]] && source "/home/pix/.gvm/scripts/gvm"
-. "$HOME/.cargo/env"
+[ -f "$CARGO_HOME/env" ] && . "$CARGO_HOME/env"
 
 . "$HOME/.local/share/../bin/env"
