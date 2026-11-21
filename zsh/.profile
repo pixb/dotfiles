@@ -16,22 +16,9 @@ fi
 export HISTFILE="$XDG_STATE_HOME/bash/history"
 export HISTIGNORE="cd:cd -:cd ..:pwd:ls:exit"
 
-# set PATH so it includes user's private bin if it exists
-if [ -d "$HOME/bin" ]; then
-  PATH="$HOME/bin:$PATH"
-fi
-
-if [ -d "$HOME/.local/bin" ]; then
-  PATH="$HOME/.local/bin:$PATH"
-fi
-
-# export BROWSER=/usr/bin/chromium
-# export BROWSER=/usr/bin/google-chrome-stable
-export BROWSER=/usr/bin/qutebrowser
-export EDITOR=/usr/bin/nvim
+# SYSTEMD_EDITOR is not set in profile.sh (systemd tools need it)
 export SYSTEMD_EDITOR=vim
 
-# export GTK_IM_MODULE=fcitx
 export QT_IM_MODULE=fcitx
 export XMODIFIERS=@im=fcitx
 
@@ -59,4 +46,4 @@ export XDG_SESSION_TYPE=wayland
 export XDG_SESSION_DESKTOP=River
 export XDG_CURRENT_DESKTOP=River
 
-. "$HOME/.cargo/env"
+[ -f "$CARGO_HOME/env" ] && . "$CARGO_HOME/env"

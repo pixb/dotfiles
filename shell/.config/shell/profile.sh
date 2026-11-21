@@ -27,14 +27,35 @@ export XDG_DOCUMENTS_DIR="$HOME/Documents"
 export XDG_MUSIC_DIR="$HOME/Music"
 export XDG_PICTURES_DIR="$HOME/Pictures"
 export XDG_VIDEOS_DIR="$HOME/Videos"
-export GRIM_DEFAULT_DIR="$HOME/Pictures/Screenshots"
+# fzf
+export FZF_DEFAULT_OPTS_FILE="$HOME/.config/fzf/fzfrc"
+export FZF_DEFAULT_COMMAND='fd --hidden --ignore-file=.gitignore --exclude .git --type f'
+export FZF_PREVIEW_COMMAND='[[ $(file --mime {}) =~ binary ]] && echo {} is a binary file || (batcat --color=always {} || bat --color=always {} || highlight -O ansi -l {} || cat {}) 2> /dev/null | head -500'
 
 export XDG_CONFIG_HOME="$HOME/.config"    # analogous to /etc
 export XDG_CACHE_HOME="$HOME/.cache"      # analogous to /var/cache
 export XDG_DATA_HOME="$HOME/.local/share" # analogous to /usr/share
 export XDG_STATE_HOME="$HOME/.local/state"
 
-# fzf
-export FZF_DEFAULT_OPTS_FILE="$HOME/.config/fzf/fzfrc"
-export FZF_DEFAULT_COMMAND='fd --hidden --ignore-file=.gitignore --exclude .git --type f'
-export FZF_PREVIEW_COMMAND='[[ $(file --mime {}) =~ binary ]] && echo {} is a binary file || (batcat --color=always {} || bat --color=always {} || highlight -O ansi -l {} || cat {}) 2> /dev/null | head -500'
+export INPUTRC="$XDG_CONFIG_HOME/readline/inputrc"
+
+export PARALLEL_HOME="$XDG_CONFIG_HOME/parallel"
+# ~/.calc_history
+export CALCHISTFILE="$XDG_CACHE_HOME/calc_history"
+# ~/.nv
+export CUDA_CACHE_PATH="$XDG_CACHE_HOME/nv"
+# export GTK2_RC_FILES="$XDG_CONFIG_HOME/gtk-2.0/gtkrc"
+# ~/.w3m
+export W3M_DIR="$XDG_STATE_HOME/w3m"
+# ~/.mailcap
+export MAILCAPS="$XDG_CONFIG_HOME/mailcap"
+# .Xauthority
+export XAUTHORITY="$XDG_RUNTIME_DIR/Xauthority"
+# ~/.wgetrc
+export WGETRC="$XDG_CONFIG_HOME/wget/wgetrc"
+export ANDROID_SDK_HOME="$XDG_CONFIG_HOME/android"
+export CARGO_HOME="$XDG_DATA_HOME/cargo"
+export PATH="$CARGO_HOME/bin:$PATH" # cargo-installed binaries (rust toolchain comes from pacman)
+export GOPATH="$XDG_DATA_HOME/go"
+
+export GRIM_DEFAULT_DIR="$HOME/Pictures/Screenshots"

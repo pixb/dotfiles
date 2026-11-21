@@ -24,11 +24,6 @@ else
 fi
 
 
-# History configuration
-HISTSIZE=10000
-SAVEHIST=10000
-HISTFILE=~/.zsh_history
-
 ###################
 #  my 10k config  #
 ###################
@@ -67,24 +62,7 @@ setopt autocd    # auto cd by typing path
 # shell functions: hist -d/-e/-D history switch (no-history sessions)
 source $HOME/dotfiles/config/functions.zsh
 
-############
-#  golang  #
-############
-GVM_FILE=$HOME/.gvm/scripts/gvm
-if [ -e ${GVM_FILE} ]; then
-  source ${GVM_FILE}
-else
-  bash < <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer)
-  source ${GVM_FILE}
-fi
-if ! command -v go >/dev/null 2>&1 || ! $(go version | grep -q 1.25.1) ; then
-  gvm install go1.25.1 -B --with-protobuf
-  gvm use go1.25.1 --default
-fi
-go env -w GO111MODULE=on
 export GOPROXY=https://goproxy.cn,direct
-# export GOPATH=$HOME/go
-# export PATH=$PATH:$GOPATH/bin
 
 
 #########
@@ -113,14 +91,6 @@ if [ ! -e $HOME/.sdkman ]; then
 	curl -s "https://get.sdkman.io" | bash
 fi
 source "$HOME/.sdkman/bin/sdkman-init.sh"
-
-###########
-#  rust   #
-###########
-if [ ! -e $HOME/.cargo ]; then
-	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-fi
-. "$HOME/.cargo/env"
 
 
 #######
@@ -180,8 +150,6 @@ zinit snippet OMZ::plugins/sudo/sudo.plugin.zsh
 # Install plugins if there are plugins that have not been installed
 # zinit self-update
 # zinit update --all
-
-[[ -s "/home/pix/.gvm/scripts/gvm" ]] && source "/home/pix/.gvm/scripts/gvm"
 
 if [ -e ${HOME}/dev/env ]; then
   . <(gpg -d ~/dev/env/env/agentmemory.env.gpg 2>/dev/null)
