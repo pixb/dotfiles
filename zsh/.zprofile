@@ -7,7 +7,6 @@
 [ -d "${XDG_STATE_HOME}/zsh" ] || mkdir -p "${XDG_STATE_HOME}/zsh"
 
 export HISTFILE="${XDG_STATE_HOME}/zsh/history"
-export ZDOTDIR="$XDG_CONFIG_HOME/zsh"
 export ZSH_COMPDUMP="$XDG_CACHE_HOME/zsh/.zcompdump"
 
 export HISTORY_IGNORE="(cd|cd -|cd ..|pwd|ls|exit|)"

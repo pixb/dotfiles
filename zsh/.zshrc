@@ -46,6 +46,10 @@ bindkey -M viins '^F' fzf-file-widget
 #########################
 export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=yellow'
 
+# ls colors (XDG config) + sync zsh completion colors
+[ -f "$HOME/.config/dircolors" ] && eval "$(dircolors "$HOME/.config/dircolors")"
+zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
+
 # Load my custom configurations
 # general bash/zsh aliases first, then zsh-specific ones (can override)
 [ -f "$HOME/.config/shell/aliases.sh" ] && . "$HOME/.config/shell/aliases.sh"

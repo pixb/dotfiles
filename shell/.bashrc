@@ -10,6 +10,9 @@ export GPG_TTY=$(tty) # TUI pinentry, need be set for each pts
 # pyenv interactive layer (login layer lives in profile.sh)
 [ -x "$PYENV_ROOT/bin/pyenv" ] && eval "$(pyenv init - bash)"
 
+# ls colors (XDG config)
+[ -f "$HOME/.config/dircolors" ] && eval "$(dircolors "$HOME/.config/dircolors")"
+
 # general aliases (shared with zsh)
 [ -f "$HOME/.config/shell/aliases.sh" ] && . "$HOME/.config/shell/aliases.sh"
 [ -f "$HOME/.config/shell/functions.sh" ] && . "$HOME/.config/shell/functions.sh"

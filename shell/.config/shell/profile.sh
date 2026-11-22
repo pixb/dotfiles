@@ -38,6 +38,7 @@ export XDG_DATA_HOME="$HOME/.local/share" # analogous to /usr/share
 export XDG_STATE_HOME="$HOME/.local/state"
 
 export INPUTRC="$XDG_CONFIG_HOME/readline/inputrc"
+export LESSKEYIN="$XDG_CONFIG_HOME/lesskey" # less 710+ reads plain-text key file directly
 
 export PARALLEL_HOME="$XDG_CONFIG_HOME/parallel"
 # ~/.calc_history
