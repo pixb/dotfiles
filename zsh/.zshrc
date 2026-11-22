@@ -13,6 +13,10 @@ plugins=(
 ###########
 #  zinit  #
 ###########
+# keep completion dump out of $HOME (zinit calls compinit internally)
+typeset -gA ZINIT
+ZINIT[ZCOMPDUMP_PATH]="${ZSH_COMPDUMP:-$XDG_CACHE_HOME/zsh/.zcompdump}"
+
 ZINIT_FILE=$HOME/.local/share/zinit/zinit.git/zinit.zsh
 if [ -e ${ZINIT_FILE} ]; then
     source ${ZINIT_FILE}
@@ -81,6 +85,10 @@ export GOPROXY=https://goproxy.cn,direct
 if [ ! -e $HOME/.sdkman ]; then
 	curl -s "https://get.sdkman.io" | bash
 fi
+
+# Init completion early (XDG dump path) so sdkman's bare `compinit` is skipped
+fpath=(~/.local/share/zsh/site-functions $fpath)
+autoload -Uz compinit && compinit -d "${ZSH_COMPDUMP:-$XDG_CACHE_HOME/zsh/.zcompdump}"
 source "$HOME/.sdkman/bin/sdkman-init.sh"
 
 
@@ -117,10 +125,6 @@ ___MY_VMOPTIONS_SHELL_FILE="${HOME}/.jetbrains.vmoptions.sh"
 #################
 #  zinit plugins
 #################
-# custom completions
-fpath=(~/.local/share/zsh/site-functions $fpath)
-# Ensure compinit is loaded before loading plugins
-autoload -Uz compinit && compinit
 zinit light romkatv/powerlevel10k
 zinit light zsh-users/zsh-completions
 zinit ice wait'1' lucid  # 延迟 1 秒加载
