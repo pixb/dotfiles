@@ -39,6 +39,7 @@ export XDG_STATE_HOME="$HOME/.local/state"
 
 export INPUTRC="$XDG_CONFIG_HOME/readline/inputrc"
 export LESSKEYIN="$XDG_CONFIG_HOME/lesskey" # less 710+ reads plain-text key file directly
+export GIT_CONFIG_GLOBAL="$XDG_CONFIG_HOME/git/config" # ~/.gitconfig
 
 export PARALLEL_HOME="$XDG_CONFIG_HOME/parallel"
 # ~/.calc_history
