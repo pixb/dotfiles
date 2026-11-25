@@ -233,26 +233,11 @@ if [ -f "${HOME}/.ssh/id_rsa" ]; then
   ssh-add "${HOME}/.ssh/id_rsa"
 fi
 
-# pyenv
-export PYENV_ROOT="${XDG_DATA_HOME}/pyenv"
-if [ -d "$PYENV_ROOT" ]; then
-  echo -e "${COLOR_GREEN}pyenv is installed${COLOR_NC}"
-else
-  echo -e "${COLOR_YELLOW}pyenv is not install${COLOR_NC}"
-  git clone https://github.com/pyenv/pyenv.git "$PYENV_ROOT"
-fi
-export PATH="$PYENV_ROOT/bin:$PATH"
+# === Python (system) + uv ===
+# System Python comes from pacman; uv handles venvs/packages. No shims, no global
+# python switch: use `uv run` / `uv venv` / `uv tool install` per project.
+pacman_install python python-pip
 
-if command -v pyenv &>/dev/null; then
-  if pyenv versions --bare | grep -qx "3.12.13"; then
-    echo "3.12.13 已安装，跳过"
-  else
-    pyenv install 3.12.13
-    pyenv global 3.12.13
-  fi
-fi
-
-# === uv (Python package manager) ===
 if command -v uv &>/dev/null; then
   echo_is_existed "uv"
 else
@@ -262,7 +247,7 @@ else
 fi
 
 # === ranger ===
-pip3 install setuptools || true
+uv pip install --system setuptools || true
 aur_install ranger-git
 
 cd ${DOTFILES_PATH}

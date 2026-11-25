@@ -72,13 +72,6 @@ source $HOME/dotfiles/config/functions.zsh
 export GOPROXY=https://goproxy.cn,direct
 
 
-###########
-#  pyenv  #
-###########
-# 安装由 scripts/arch_install_user.sh 负责；这里只做交互层初始化
-[ -x "$PYENV_ROOT/bin/pyenv" ] && eval "$(pyenv init - zsh)"
-
-
 #########
 #  java #
 #########
