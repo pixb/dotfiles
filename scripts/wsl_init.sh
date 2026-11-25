@@ -103,12 +103,7 @@ pacman_install nodejs
 pacman_install npm
 rm -rf /home/pix/.cache/trizen/sources/ccat
 trizen_install ccat-bin
-pacman_install tmux
 pacman_install postgresql
-
-if [ ! -d "${HOME}/.tmux" ]; then
-  bash "${SCRIPT_DIR}/tmux/config_tmux.sh"
-fi
 
 trizen_install duf
 pacman_install hdparm

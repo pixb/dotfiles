@@ -131,7 +131,7 @@ fi
 npm config set prefix "${XDG_DATA_HOME}/npm-global"
 
 pacman_install neovim openssh tk fzf the_silver_searcher
-pacman_install tmux ripgrep lazygit imagemagick highlight
+pacman_install ripgrep lazygit imagemagick highlight
 pacman_install p7zip rsync cifs-utils smbclient stow
 pacman_install brightnessctl wob pacman-contrib
 pacman_install neomutt isync eza parallel calc
@@ -286,10 +286,6 @@ mkdir -p "${XDG_DATA_HOME}/cargo/bin"
 # === mechrevo JiguangX laptop (drivers + fan control) ===
 if grep -qi 'MECHREVO' /sys/devices/virtual/dmi/id/sys_vendor 2>/dev/null; then
   bash "${SCRIPT_DIR}/mechrevo_jiguangx_install.sh"
-fi
-
-if [ ! -d $HOME/.tmux ]; then
-  bash ${SCRIPT_DIR}/../tmux/config_tmux.sh
 fi
 
 pacman_install bc

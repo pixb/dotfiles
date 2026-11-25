@@ -64,7 +64,6 @@ output * mode 1920x1080
 
 ### Auto start
 exec foot --server
-exec sleep 3 && $term -T "Scratchpad Tmux" tmux
 exec "fcitx5 -d"
 exec "wl-paste --watch cliphist store"
 exec dbus-update-activation-environment --systemd DISPALY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP SWAYSOCK
@@ -76,7 +75,6 @@ exec dbus-update-activation-environment --systemd DISPALY WAYLAND_DISPLAY XDG_CU
     # Start a terminal
     bindsym $mod+Return exec $term
     bindsym $mod+Shift+Return exec $term -T "Floating Term"
-    bindsym $mod+Ctrl+Return exec $term -T "Scratchpad Tmux" tmux
     bindsym $mod+r exec $term ranger
 
     # Kill focused window
