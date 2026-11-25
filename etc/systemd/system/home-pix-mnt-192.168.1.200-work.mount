@@ -1,0 +1,11 @@
+[Unit]
+Description=SMB mount //192.168.1.200/work
+
+[Mount]
+What=//192.168.1.200/work
+Where=/home/pix/mnt/192.168.1.200/work
+Type=cifs
+Options=credentials=/etc/samba/credentials/192.168.1.200,vers=3.0,uid=1000,gid=1000,file_mode=0644,dir_mode=0755,nofail,rsize=1048576,wsize=1048576,cache=loose
+
+[Install]
+WantedBy=multi-user.target

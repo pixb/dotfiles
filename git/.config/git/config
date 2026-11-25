@@ -4,7 +4,7 @@
 [core]
 	editor = vim
 	whitespace = fix, -indent-with-non-tab, trailing-space, cr-at-eol
-	excludesfile=~/.gitignore_global
+	excludesfile=/home/pix/.config/git/gitignore_global
 	autocrlf = input
 [init]
   defaultBranch = main
@@ -51,7 +51,7 @@ tool = nvimdiff
 [http]
 	postBuffer = 524288000
 [commit]
-	template = /home/pix/.gitmessage
+	template = /home/pix/.config/git/gitmessage
 [filter "lfs"]
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f

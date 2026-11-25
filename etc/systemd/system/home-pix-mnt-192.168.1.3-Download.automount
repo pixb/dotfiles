@@ -1,0 +1,9 @@
+[Unit]
+Description=Automount //192.168.1.3/Download
+
+[Automount]
+Where=/home/pix/mnt/192.168.1.3/Download
+TimeoutIdleSec=600
+
+[Install]
+WantedBy=multi-user.target
