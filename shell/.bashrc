@@ -16,5 +16,5 @@ export GPG_TTY=$(tty) # TUI pinentry, need be set for each pts
 PS1='[\u@\h \W]\$ '
 
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
-export SDKMAN_DIR="$HOME/.sdkman"
-[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+export SDKMAN_DIR="${SDKMAN_DIR:-$HOME/.local/share/sdkman}"
+[[ -s "$SDKMAN_DIR/bin/sdkman-init.sh" ]] && source "$SDKMAN_DIR/bin/sdkman-init.sh"

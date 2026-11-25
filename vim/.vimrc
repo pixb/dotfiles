@@ -23,6 +23,7 @@ set smarttab
 set shiftwidth=2
 set tabstop=2
 set softtabstop=2
+set viminfo+=n/home/pix/.local/state/vim/viminfo
 " 设置光标样式
 if has("gui_running") || has("termguicolors")
   " Normal 模式下的光标样式为实心方块

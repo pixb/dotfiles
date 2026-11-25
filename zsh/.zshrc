@@ -29,9 +29,9 @@ fi
 #  my 10k config  #
 ###################
 # Switch between prompt styles by editing the line below:
-# source ~/.pl10krc    # Original style (detailed)
-# source ~/.pl10krc2   # Minimal style (lean, performance-focused)
-source ~/.pl10krc2
+# source ~/.config/pl10k/.pl10krc    # Original style (detailed)
+# source ~/.config/pl10k/.pl10krc2   # Minimal style (lean, performance-focused)
+source ~/.config/pl10k/.pl10krc2
 
 
 #########
@@ -75,14 +75,16 @@ export GOPROXY=https://goproxy.cn,direct
 #########
 #  java #
 #########
-if [ ! -e $HOME/.sdkman ]; then
+export SDKMAN_DIR="${SDKMAN_DIR:-$HOME/.local/share/sdkman}"
+if [ ! -e "$SDKMAN_DIR" ]; then
 	curl -s "https://get.sdkman.io" | bash
+	[ -e "$HOME/.sdkman" ] && mv "$HOME/.sdkman" "$SDKMAN_DIR"
 fi
 
 # Init completion early (XDG dump path) so sdkman's bare `compinit` is skipped
 fpath=(~/.local/share/zsh/site-functions $fpath)
 autoload -Uz compinit && compinit -d "${ZSH_COMPDUMP:-$XDG_CACHE_HOME/zsh/.zcompdump}"
-source "$HOME/.sdkman/bin/sdkman-init.sh"
+source "$SDKMAN_DIR/bin/sdkman-init.sh"
 
 
 #######
@@ -126,11 +128,6 @@ zinit ice wait'0' lucid  # 异步+静默加载
 zinit light zsh-users/zsh-autosuggestions
 zinit light zdharma/fast-syntax-highlighting
 zinit light zpm-zsh/ls
-zinit ice atload'
-    local zlua="${ZINIT[PLUGINS_DIR]:-$HOME/.local/share/zinit/plugins}/skywind3000--z.lua/z.lua"
-    [[ -f "$zlua" ]] && eval "$(lua "$zlua" --init zsh)"
-'
-zinit light skywind3000/z.lua
 zinit snippet OMZ::plugins/extract/extract.plugin.zsh
 zinit snippet OMZ::plugins/sudo/sudo.plugin.zsh
 # zinit light b4b4r07/enhancd

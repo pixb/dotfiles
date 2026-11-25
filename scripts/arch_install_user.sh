@@ -153,20 +153,24 @@ stow -t ~ go
 stow -t ~ gnupg
 stow -t ~ readline
 stow -t ~ wget
+stow -t ~ environment-d
+stow -t ~ pl10k
 mkdir -p "${HOME}/.local"
 # --no-folding keeps ~/.local/bin and ~/.local/share real directories so tools
 # that install there (uv, pip) do not write into the dotfiles repo.
 stow --no-folding -t ~/.local .local
 cd ${SCRIPT_DIR}
 
-if [ -e $HOME/.sdkman/bin/sdkman-init.sh ]; then
+export SDKMAN_DIR="${SDKMAN_DIR:-${HOME}/.local/share/sdkman}"
+if [ -e ${SDKMAN_DIR}/bin/sdkman-init.sh ]; then
   echo -e "${COLOR_GREEN}sdkman is installed${COLOR_NC}"
   set +u
-  source "$HOME/.sdkman/bin/sdkman-init.sh"
+  source "${SDKMAN_DIR}/bin/sdkman-init.sh"
   set -u
 else
   echo -e "${COLOR_YELLOW}sdkman not init, init...${COLOR_NC}"
   curl -s "https://get.sdkman.io" | bash
+  [ -e "${HOME}/.sdkman" ] && mv "${HOME}/.sdkman" "${SDKMAN_DIR}"
 fi
 
 if command -v java &>/dev/null; then
@@ -176,7 +180,7 @@ else
   if command -v sdk &>/dev/null; then
     echo -e "${COLOR_GREEN}sdkman is installed${COLOR_GREEN}"
     set +u
-    if [ ! -e ${HOME}/.sdkman/candidates/java/11.0.23-tem ]; then
+    if [ ! -e ${SDKMAN_DIR}/candidates/java/11.0.23-tem ]; then
       sdk install java 11.0.23-tem
     fi
     set -u
