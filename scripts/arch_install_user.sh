@@ -150,7 +150,8 @@ stow -t ~ zsh
 stow -t ~ git
 stow -t ~ shell
 stow -t ~ go
-stow -t ~ gnupg
+mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/gnupg"
+stow --no-folding -t ~ gnupg
 stow -t ~ readline
 stow -t ~ wget
 stow -t ~ environment-d
@@ -290,6 +291,7 @@ fi
 pacman_install openbsd-netcat
 pacman_install docker
 pacman_install docker-compose
+pacman_install docker-buildx
 if [ ! -d /etc/docker ]; then
   sudo mkdir -p /etc/docker
 fi
