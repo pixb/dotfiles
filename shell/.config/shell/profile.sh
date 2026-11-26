@@ -47,7 +47,7 @@ export CALCHISTFILE="$XDG_CACHE_HOME/calc_history"
 # ~/.nv
 export CUDA_CACHE_PATH="$XDG_CACHE_HOME/nv"
 # export GTK2_RC_FILES="$XDG_CONFIG_HOME/gtk-2.0/gtkrc"
-# ~/.w3m
+# ~/.local/state/w3m
 export W3M_DIR="$XDG_STATE_HOME/w3m"
 # ~/.mailcap
 export MAILCAPS="$XDG_CONFIG_HOME/mailcap"
