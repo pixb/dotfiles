@@ -13,7 +13,7 @@ include globals.local
 #ignore private-etc
 
 noblacklist ${HOME}/.mailcap
-noblacklist ${HOME}/.w3m
+noblacklist ${HOME}/.local/state/w3m
 
 # Allow /bin/sh (blacklisted by disable-shell.inc)
 include allow-bin-sh.inc
@@ -32,10 +32,10 @@ include disable-shell.inc
 include disable-x11.inc
 include disable-xdg.inc
 
-mkdir ${HOME}/.w3m
+mkdir ${HOME}/.local/state/w3m
 whitelist ${DOWNLOADS}
 whitelist ${HOME}/.mailcap
-whitelist ${HOME}/.w3m
+whitelist ${HOME}/.local/state/w3m
 whitelist /usr/share/w3m
 include whitelist-runuser-common.inc
 include whitelist-usr-share-common.inc
@@ -70,5 +70,5 @@ dbus-user none
 dbus-system none
 
 memory-deny-write-execute
-read-write ${HOME}/.w3m
+read-write ${HOME}/.local/state/w3m
 restrict-namespaces
