@@ -59,7 +59,6 @@ zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
 [ -f "$HOME/.config/shell/aliases.sh" ] && . "$HOME/.config/shell/aliases.sh"
 [ -f "$HOME/.config/shell/functions.sh" ] && . "$HOME/.config/shell/functions.sh"
 [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/zsh/aliases.zsh" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/zsh/aliases.zsh"
-[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/zsh/git.zsh" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/zsh/git.zsh"
 
 # shell teleport: comma-path aliases (,h ,dm ,m ...); autocd makes them cd
 [ -f "$HOME/.config/shell/teleport.sh" ] && . "$HOME/.config/shell/teleport.sh"
