@@ -60,10 +60,10 @@ LICENSE.*   
 ~/.cache    󰪻
 ~/.local    󱉮
 
-~/.config/gnupg 󰢬
+~/.gnupg    󰢬
 ~/.ssh      󰢬
 .gpg/       󰉐
-gnupg/      󰉐
+.gnupg/     󰉐
 
 *.gpg       
 *.key       󰌆

@@ -150,8 +150,7 @@ stow -t ~ zsh
 stow -t ~ git
 stow -t ~ shell
 stow -t ~ go
-mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/gnupg"
-stow --no-folding -t ~ gnupg
+stow -t ~ gnupg
 stow -t ~ readline
 stow -t ~ wget
 stow -t ~ environment-d

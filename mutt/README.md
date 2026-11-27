@@ -149,7 +149,7 @@ mutt/
 
 ### "Permission denied" for GPG
 - Ensure GPG agent is running: `gpg-connect-agent /bye`
-- Configure loopback pinentry: `echo "allow-loopback-pinentry" >> ~/.config/gnupg/gpg-agent.conf`
+- Configure loopback pinentry: `echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf`
 - Set `export GPG_TTY=$(tty)`
 
 ### mbsync SSL error (proxy/TUN environment)

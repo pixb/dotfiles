@@ -29,7 +29,7 @@ stow -t ~ dunst    # dunst 通知配置
 stow -t ~ fcitx5   # 输入法配置
 stow -t ~ waybar   # waybar 状态栏配置 (如使用 sway)
 stow -t ~ shell    # .bashrc 等通用 shell 配置
-stow --no-folding -t ~ gnupg  # ~/.config/gnupg/gpg*.conf (TTL / pinentry)
+stow -t ~ gnupg    # ~/.gnupg/gpg-agent.conf (TTL / pinentry)
 stow -t ~ newsboat # RSS 阅读器配置
 stow -t ~ lf       # lf 文件管理器配置
 ```
