@@ -12,7 +12,9 @@ export GPG_TTY=$(tty) # TUI pinentry, need be set for each pts
 
 # general aliases (shared with zsh)
 [ -f "$HOME/.config/shell/aliases.sh" ] && . "$HOME/.config/shell/aliases.sh"
+[ -f "$HOME/.config/shell/teleport.sh" ] && . "$HOME/.config/shell/teleport.sh"
 [ -f "$HOME/.config/shell/functions.sh" ] && . "$HOME/.config/shell/functions.sh"
+[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/bash/aliases.bash" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/bash/aliases.bash"
 PS1='[\u@\h \W]\$ '
 
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!

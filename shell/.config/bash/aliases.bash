@@ -1,0 +1,1 @@
+alias .r=". ~/.profile && . ~/.bashrc"

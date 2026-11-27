@@ -58,16 +58,15 @@ zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
 # general bash/zsh aliases first, then zsh-specific ones (can override)
 [ -f "$HOME/.config/shell/aliases.sh" ] && . "$HOME/.config/shell/aliases.sh"
 [ -f "$HOME/.config/shell/functions.sh" ] && . "$HOME/.config/shell/functions.sh"
-source $HOME/dotfiles/config/alias.zsh
-source $HOME/dotfiles/config/git.zsh
-source $HOME/dotfiles/config/android.zsh
+[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/zsh/aliases.zsh" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/zsh/aliases.zsh"
+[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/zsh/git.zsh" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/zsh/git.zsh"
 
 # shell teleport: comma-path aliases (,h ,dm ,m ...); autocd makes them cd
 [ -f "$HOME/.config/shell/teleport.sh" ] && . "$HOME/.config/shell/teleport.sh"
 setopt autocd    # auto cd by typing path
 
 # shell functions: hist -d/-e/-D history switch (no-history sessions)
-source $HOME/dotfiles/config/functions.zsh
+[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/zsh/functions.zsh" ] && . "${XDG_CONFIG_HOME:-$HOME/.config}/zsh/functions.zsh"
 
 export GOPROXY=https://goproxy.cn,direct
 
