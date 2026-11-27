@@ -507,3 +507,9 @@ git lfs install
 
 aur_install ast-grep
 pacman_install bun
+
+sudo cp "${DOTFILES_PATH}/etc/systemd/system/comfyui.service" /etc/systemd/system/comfyui.service
+sudo systemctl daemon-reload
+if systemctl is-active --quiet comfyui.service; then
+  sudo systemctl restart comfyui.service
+fi
